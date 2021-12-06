@@ -156,10 +156,9 @@ func getHookFiles(filesdir string) misc.StringSet {
 		defer f.Close()
 		s := bufio.NewScanner(f)
 		for s.Scan() {
-			if !exists(s.Text()) {
+			if err := getFile(files, s.Text(), true); err != nil {
 				log.Fatalf("Unable to find file %q required by %q", s.Text(), path)
 			}
-			files[s.Text()] = false
 		}
 		if err := s.Err(); err != nil {
 			log.Fatal(err)
@@ -243,9 +242,38 @@ func getFiles(files misc.StringSet, newFiles misc.StringSet, required bool) erro
 }
 
 func getFile(files misc.StringSet, file string, required bool) error {
-	if !exists(file) {
+	// Expand glob expression
+	expanded, _ := filepath.Glob(file)
+	if len(expanded) > 0 && expanded[0] != file {
+		for _, path := range expanded {
+			if err := getFile(files, path, required); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	fileInfo, err := os.Stat(file)
+	if err != nil {
 		if required {
 			return errors.New("getFile: File does not exist :" + file)
+		}
+		return nil
+	}
+
+	if fileInfo.IsDir() {
+		// Recurse over directory contents
+		err := filepath.Walk(file, func(path string, f os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			if f.IsDir() {
+				return nil
+			}
+			return getFile(files, path, required)
+		})
+		if err != nil {
+			return err
 		}
 		return nil
 	}
@@ -258,8 +286,7 @@ func getFile(files misc.StringSet, file string, required bool) error {
 		return nil
 	}
 
-	err := getBinaryDeps(files, file)
-	if err != nil {
+	if err := getBinaryDeps(files, file); err != nil {
 		return err
 	}
 
