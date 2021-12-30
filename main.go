@@ -19,10 +19,18 @@ import (
 	"strings"
 	"time"
 
+	"github.com/spf13/afero"
+
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/pkgs/archive"
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/pkgs/deviceinfo"
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/pkgs/misc"
 )
+
+var appFs afero.Fs
+
+func initFs(fs afero.Fs) {
+	appFs = fs
+}
 
 func timeFunc(start time.Time, name string) {
 	elapsed := time.Since(start)
@@ -30,6 +38,8 @@ func timeFunc(start time.Time, name string) {
 }
 
 func main() {
+	initFs(afero.NewOsFs())
+
 	deviceinfoFile := "/etc/deviceinfo"
 	if !exists(deviceinfoFile) {
 		log.Print("NOTE: deviceinfo (from device package) not installed yet, " +
@@ -58,7 +68,7 @@ func main() {
 	if err != nil {
 		log.Fatal("Unable to create temporary work directory:", err)
 	}
-	defer os.RemoveAll(workDir)
+	defer appFs.RemoveAll(workDir)
 
 	log.Print("Generating for kernel version: ", kernVer)
 	log.Print("Output directory: ", *outDir)
@@ -82,7 +92,7 @@ func bootDeploy(workDir string, outDir string) error {
 	// boot-deploy expects the kernel to be in the same dir as initramfs.
 	// Assume that the kernel is in the output dir...
 	log.Print("== Using boot-deploy to finalize/install files ==")
-	kernels, _ := filepath.Glob(filepath.Join(outDir, "vmlinuz*"))
+	kernels, _ := afero.Glob(appFs, filepath.Join(outDir, "vmlinuz*"))
 	if len(kernels) == 0 {
 		return errors.New("Unable to find any kernels at " + filepath.Join(outDir, "vmlinuz*"))
 	}
@@ -97,13 +107,13 @@ func bootDeploy(workDir string, outDir string) error {
 		break
 	}
 
-	kernFd, err := os.Open(kernFile)
+	kernFd, err := appFs.Open(kernFile)
 	if err != nil {
 		return err
 	}
 	defer kernFd.Close()
 
-	kernFileCopy, err := os.Create(filepath.Join(workDir, "vmlinuz"))
+	kernFileCopy, err := appFs.Create(filepath.Join(workDir, "vmlinuz"))
 	if err != nil {
 		return err
 	}
@@ -135,7 +145,7 @@ func bootDeploy(workDir string, outDir string) error {
 }
 
 func exists(file string) bool {
-	if _, err := os.Stat(file); err == nil {
+	if _, err := appFs.Stat(file); err == nil {
 		return true
 	}
 	return false
@@ -149,7 +159,7 @@ func getHookFiles(filesdir string) misc.StringSet {
 	files := make(misc.StringSet)
 	for _, file := range fileInfo {
 		path := filepath.Join(filesdir, file.Name())
-		f, err := os.Open(path)
+		f, err := appFs.Open(path)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -169,16 +179,26 @@ func getHookFiles(filesdir string) misc.StringSet {
 
 // Recursively list all dependencies for a given ELF binary
 func getBinaryDeps(files misc.StringSet, file string) error {
+	lstater, ok := appFs.(afero.Lstater)
+	if !ok {
+		return errors.New("FS doesn't support Lstat")
+	}
+
 	// if file is a symlink, resolve dependencies for target
-	fileStat, err := os.Lstat(file)
+	fileStat, _, err := lstater.LstatIfPossible(file)
 	if err != nil {
 		log.Print("getBinaryDeps: failed to stat file")
 		return err
 	}
 
+	lreader, ok := appFs.(afero.LinkReader)
+	if !ok {
+		return errors.New("FS doesn't support Readlink")
+	}
+
 	// Symlink: write symlink to archive then set 'file' to link target
 	if fileStat.Mode()&os.ModeSymlink != 0 {
-		target, err := os.Readlink(file)
+		target, err := lreader.ReadlinkIfPossible(file)
 		if err != nil {
 			log.Print("getBinaryDeps: unable to read symlink: ", file)
 			return err
@@ -213,7 +233,7 @@ func getBinaryDeps(files misc.StringSet, file string) error {
 		found := false
 		for _, libdir := range libdirs {
 			path := filepath.Join(libdir, lib)
-			if _, err := os.Stat(path); err == nil {
+			if _, err := appFs.Stat(path); err == nil {
 				err := getBinaryDeps(files, path)
 				if err != nil {
 					return err
@@ -243,7 +263,7 @@ func getFiles(files misc.StringSet, newFiles misc.StringSet, required bool) erro
 
 func getFile(files misc.StringSet, file string, required bool) error {
 	// Expand glob expression
-	expanded, _ := filepath.Glob(file)
+	expanded, _ := afero.Glob(appFs, file)
 	if len(expanded) > 0 && expanded[0] != file {
 		for _, path := range expanded {
 			if err := getFile(files, path, required); err != nil {
@@ -253,7 +273,7 @@ func getFile(files misc.StringSet, file string, required bool) error {
 		return nil
 	}
 
-	fileInfo, err := os.Stat(file)
+	fileInfo, err := appFs.Stat(file)
 	if err != nil {
 		if required {
 			return errors.New("getFile: File does not exist :" + file)
@@ -263,7 +283,7 @@ func getFile(files misc.StringSet, file string, required bool) error {
 
 	if fileInfo.IsDir() {
 		// Recurse over directory contents
-		err := filepath.Walk(file, func(path string, f os.FileInfo, err error) error {
+		err := afero.Walk(appFs, file, func(path string, f os.FileInfo, err error) error {
 			if err != nil {
 				return err
 			}
@@ -295,7 +315,7 @@ func getFile(files misc.StringSet, file string, required bool) error {
 
 func getOskConfFontPath(oskConfPath string) (string, error) {
 	var path string
-	f, err := os.Open(oskConfPath)
+	f, err := appFs.Open(oskConfPath)
 	if err != nil {
 		return path, err
 	}
@@ -347,7 +367,7 @@ func getFdeFiles(files misc.StringSet, devinfo deviceinfo.DeviceInfo) error {
 
 	// Directfb
 	dfbFiles := make(misc.StringSet)
-	err = filepath.Walk("/usr/lib/directfb-1.7-7", func(path string, f os.FileInfo, err error) error {
+	err = afero.Walk(appFs, "/usr/lib/directfb-1.7-7", func(path string, f os.FileInfo, err error) error {
 		if filepath.Ext(path) == ".so" {
 			dfbFiles[path] = false
 		}
@@ -363,7 +383,7 @@ func getFdeFiles(files misc.StringSet, devinfo deviceinfo.DeviceInfo) error {
 
 	// tslib
 	tslibFiles := make(misc.StringSet)
-	err = filepath.Walk("/usr/lib/ts", func(path string, f os.FileInfo, err error) error {
+	err = afero.Walk(appFs, "/usr/lib/ts", func(path string, f os.FileInfo, err error) error {
 		if filepath.Ext(path) == ".so" {
 			tslibFiles[path] = false
 		}
@@ -373,7 +393,7 @@ func getFdeFiles(files misc.StringSet, devinfo deviceinfo.DeviceInfo) error {
 		log.Print("getBinaryDeps: failed to stat file")
 		return err
 	}
-	libts, _ := filepath.Glob("/usr/lib/libts*")
+	libts, _ := afero.Glob(appFs, "/usr/lib/libts*")
 	for _, file := range libts {
 		tslibFiles[file] = false
 	}
@@ -399,7 +419,7 @@ func getFdeFiles(files misc.StringSet, devinfo deviceinfo.DeviceInfo) error {
 }
 
 func getHookScripts(files misc.StringSet) {
-	scripts, _ := filepath.Glob("/etc/postmarketos-mkinitfs/hooks/*.sh")
+	scripts, _ := afero.Glob(appFs, "/etc/postmarketos-mkinitfs/hooks/*.sh")
 	for _, script := range scripts {
 		files[script] = false
 	}
@@ -474,7 +494,7 @@ func getInitfsModules(files misc.StringSet, devinfo deviceinfo.DeviceInfo, kerne
 	}
 
 	// modules.* required by modprobe
-	modprobeFiles, _ := filepath.Glob(filepath.Join(modDir, "modules.*"))
+	modprobeFiles, _ := afero.Glob(appFs, filepath.Join(modDir, "modules.*"))
 	for _, file := range modprobeFiles {
 		files[file] = false
 	}
@@ -493,7 +513,7 @@ func getInitfsModules(files misc.StringSet, devinfo deviceinfo.DeviceInfo, kerne
 		if file == "" {
 			// item is a directory
 			dir = filepath.Join(modDir, dir)
-			dirs, _ := filepath.Glob(dir)
+			dirs, _ := afero.Glob(appFs, dir)
 			for _, d := range dirs {
 				if err := getModulesInDir(files, d); err != nil {
 					log.Print("Unable to get modules in dir: ", d)
@@ -520,9 +540,9 @@ func getInitfsModules(files misc.StringSet, devinfo deviceinfo.DeviceInfo, kerne
 	}
 
 	// /etc/postmarketos-mkinitfs/modules/*.modules
-	initfsModFiles, _ := filepath.Glob("/etc/postmarketos-mkinitfs/modules/*.modules")
+	initfsModFiles, _ := afero.Glob(appFs, "/etc/postmarketos-mkinitfs/modules/*.modules")
 	for _, modFile := range initfsModFiles {
-		f, err := os.Open(modFile)
+		f, err := appFs.Open(modFile)
 		if err != nil {
 			log.Print("getInitfsModules: unable to open mkinitfs modules file: ", modFile)
 			return err
@@ -541,7 +561,7 @@ func getInitfsModules(files misc.StringSet, devinfo deviceinfo.DeviceInfo, kerne
 }
 
 func getKernelReleaseFile() (string, error) {
-	files, _ := filepath.Glob("/usr/share/kernel/*/kernel.release")
+	files, _ := afero.Glob(appFs, "/usr/share/kernel/*/kernel.release")
 	// only one kernel flavor supported
 	if len(files) != 1 {
 		return "", fmt.Errorf("only one kernel release/flavor is supported, found: %q", files)
@@ -558,7 +578,7 @@ func getKernelVersion() (string, error) {
 		return version, err
 	}
 
-	contents, err := os.ReadFile(releaseFile)
+	contents, err := afero.ReadFile(appFs, releaseFile)
 	if err != nil {
 		return version, err
 	}
@@ -594,7 +614,7 @@ func generateInitfs(name string, path string, kernVer string, devinfo deviceinfo
 
 	// splash images
 	log.Println("- Including splash images")
-	splashFiles, _ := filepath.Glob("/usr/share/postmarketos-splashes/*.ppm.gz")
+	splashFiles, _ := afero.Glob(appFs, "/usr/share/postmarketos-splashes/*.ppm.gz")
 	for _, file := range splashFiles {
 		// splash images are expected at /<file>
 		if err := initfsArchive.AddFile(file, filepath.Join("/", filepath.Base(file))); err != nil {
@@ -638,7 +658,7 @@ func stripExts(file string) string {
 }
 
 func getModulesInDir(files misc.StringSet, modPath string) error {
-	err := filepath.Walk(modPath, func(path string, f os.FileInfo, err error) error {
+	err := afero.Walk(appFs, modPath, func(path string, f os.FileInfo, err error) error {
 		// TODO: need to support more extensions?
 		if filepath.Ext(path) != ".ko" && filepath.Ext(path) != ".xz" {
 			return nil
@@ -666,7 +686,7 @@ func getModule(files misc.StringSet, modName string, modDir string) error {
 		log.Fatal("Kernel module.dep not found: ", modDir)
 	}
 
-	fd, err := os.Open(modDep)
+	fd, err := appFs.Open(modDep)
 	if err != nil {
 		log.Print("Unable to open modules.dep: ", modDep)
 		return err

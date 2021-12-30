@@ -4,6 +4,9 @@
 package main
 
 import (
+	"github.com/spf13/afero"
+	"gitlab.com/postmarketOS/postmarketos-mkinitfs/pkgs/misc"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -78,5 +81,125 @@ func TestGetModuleDeps(t *testing.T) {
 		if !stringSlicesEqual(out, table.expected) {
 			t.Errorf("Expected: %q, got: %q", table.expected, out)
 		}
+	}
+}
+
+func setUpFakeFs() {
+	fs := afero.NewMemMapFs()
+	initFs(fs)
+
+	fs.Mkdir("/foo", 0755)
+	afero.WriteFile(fs, "/foo/foo.txt", []byte("foo"), 0644)
+
+	fs.Mkdir("/foo/bar", 0755)
+	afero.WriteFile(fs, "/foo/bar/bar.txt", []byte("bar"), 0644)
+	afero.WriteFile(fs, "/foo/bar/foo.txt", []byte("foo"), 0644)
+}
+
+func TestGetFileWithFilePath(t *testing.T) {
+	setUpFakeFs()
+
+	actual := make(misc.StringSet)
+	file := "/foo/bar/bar.txt"
+	if err := getFile(actual, file, true); err != nil {
+		t.Errorf("Unexpected error when collecting file %q, error: %q", file, err)
+	}
+
+	expected := make(misc.StringSet)
+	expected["/foo/bar/bar.txt"] = false
+
+	if !reflect.DeepEqual(expected, actual) {
+		t.Errorf("Expected: %v, got: %v", expected, actual)
+	}
+}
+
+func TestGetFileWithGlobThatExpandsToSingleFile(t *testing.T) {
+	setUpFakeFs()
+
+	actual := make(misc.StringSet)
+	file := "/foo/bar/bar.*"
+	if err := getFile(actual, file, true); err != nil {
+		t.Errorf("Unexpected error when collecting file %q, error: %q", file, err)
+	}
+
+	expected := make(misc.StringSet)
+	expected["/foo/bar/bar.txt"] = false
+
+	if !reflect.DeepEqual(expected, actual) {
+		t.Errorf("Expected: %v, got: %v", expected, actual)
+	}
+}
+
+func TestGetFileWithGlobThatExpandsToMultipleFiles(t *testing.T) {
+	setUpFakeFs()
+
+	actual := make(misc.StringSet)
+	file := "/foo/bar/*.txt"
+	if err := getFile(actual, file, true); err != nil {
+		t.Errorf("Unexpected error when collecting file %q, error: %q", file, err)
+	}
+
+	expected := make(misc.StringSet)
+	expected["/foo/bar/bar.txt"] = false
+	expected["/foo/bar/foo.txt"] = false
+
+	if !reflect.DeepEqual(expected, actual) {
+		t.Errorf("Expected: %v, got: %v", expected, actual)
+	}
+}
+
+func TestGetFileWithDirectoryPath(t *testing.T) {
+	setUpFakeFs()
+
+	actual := make(misc.StringSet)
+	file := "/foo"
+	if err := getFile(actual, file, true); err != nil {
+		t.Errorf("Unexpected error when collecting file %q, error: %q", file, err)
+	}
+
+	expected := make(misc.StringSet)
+	expected["/foo/foo.txt"] = false
+	expected["/foo/bar/bar.txt"] = false
+	expected["/foo/bar/foo.txt"] = false
+
+	if !reflect.DeepEqual(expected, actual) {
+		t.Errorf("Expected: %v, got: %v", expected, actual)
+	}
+}
+
+func TestGetFileWithGlobThatExpandsToSingleDirectory(t *testing.T) {
+	setUpFakeFs()
+
+	actual := make(misc.StringSet)
+	file := "/foo/b*"
+	if err := getFile(actual, file, true); err != nil {
+		t.Errorf("Unexpected error when collecting file %q, error: %q", file, err)
+	}
+
+	expected := make(misc.StringSet)
+	expected["/foo/bar/bar.txt"] = false
+	expected["/foo/bar/foo.txt"] = false
+
+	if !reflect.DeepEqual(expected, actual) {
+		t.Errorf("Expected: %v, got: %v", expected, actual)
+	}
+}
+
+func TestGetFileWithGlobThatExpandsToDirectoriesAndFiles(t *testing.T) {
+	setUpFakeFs()
+
+	actual := make(misc.StringSet)
+	file := "/foo/*"
+	if err := getFile(actual, file, true); err != nil {
+		t.Errorf("Unexpected error when collecting file %q, error: %q", file, err)
+	}
+
+	expected := make(misc.StringSet)
+	expected["/foo/foo.txt"] = false
+	expected["/foo/bar/bar.txt"] = false
+	expected["/foo/bar/foo.txt"] = false
+
+	if !reflect.DeepEqual(expected, actual) {
+		t.Errorf("Expected: %v, got: %v", expected, actual)
 	}
 }
