@@ -16,6 +16,7 @@ import (
 type DeviceInfo struct {
 	AppendDtb                     string
 	Arch                          string
+	UbootBoardname                string
 	BootimgAppendSEAndroidEnforce string
 	BootimgBlobpack               string
 	BootimgDtbSecond              string

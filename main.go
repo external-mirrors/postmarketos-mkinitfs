@@ -71,6 +71,14 @@ func main() {
 		log.Fatal("generateInitfsExtra: ", err)
 	}
 
+	if err := copyUbootFiles(workDir, devinfo); errors.Is(err, os.ErrNotExist) {
+		log.Println("u-boot files copying skipped: ", err)
+	} else {
+		if err != nil {
+			log.Fatal("copyUbootFiles: ", err)
+		}
+	}
+
 	// Final processing of initramfs / kernel is done by boot-deploy
 	if err := bootDeploy(workDir, *outDir); err != nil {
 		log.Fatal("bootDeploy: ", err)
@@ -564,6 +572,46 @@ func getKernelVersion() (string, error) {
 	}
 
 	return strings.TrimSpace(string(contents)), nil
+}
+
+func Copy(srcFile, dstFile string) error {
+	out, err := os.Create(dstFile)
+	if err != nil {
+		return err
+	}
+
+	defer out.Close()
+
+	in, err := os.Open(srcFile)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+
+	_, err = io.Copy(out, in)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func copyUbootFiles(path string, devinfo deviceinfo.DeviceInfo) error {
+	srcDir := filepath.Join("/usr/share/u-boot", devinfo.UbootBoardname)
+	entries, err := ioutil.ReadDir(srcDir)
+	if err != nil {
+		return err
+	}
+	for _, entry := range entries {
+		sourcePath := filepath.Join(srcDir, entry.Name())
+		destPath := filepath.Join(path, entry.Name())
+
+		if err := Copy(sourcePath, destPath); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func generateInitfs(name string, path string, kernVer string, devinfo deviceinfo.DeviceInfo) error {
