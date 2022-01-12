@@ -417,6 +417,7 @@ func getInitfsExtraFiles(files misc.StringSet, devinfo deviceinfo.DeviceInfo) er
 	log.Println("== Generating initramfs extra ==")
 	binariesExtra := misc.StringSet{
 		"/lib/libz.so.1":        false,
+		"/sbin/btrfs":           false,
 		"/sbin/dmsetup":         false,
 		"/sbin/e2fsck":          false,
 		"/usr/sbin/parted":      false,
