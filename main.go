@@ -598,6 +598,10 @@ func Copy(srcFile, dstFile string) error {
 }
 
 func copyUbootFiles(path string, devinfo deviceinfo.DeviceInfo) error {
+	if devinfo.UbootBoardname == "" {
+		return nil
+	}
+
 	srcDir := filepath.Join("/usr/share/u-boot", devinfo.UbootBoardname)
 	entries, err := ioutil.ReadDir(srcDir)
 	if err != nil {
