@@ -3,6 +3,9 @@
 # global settings
 image: alpine:edge
 
+variables:
+  GOFLAGS: "-buildvcs=false"
+
 stages:
   - lint
   - build
