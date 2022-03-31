@@ -1,4 +1,4 @@
-// Copyright 2021 Clayton Craft <clayton@craftyguy.net>
+// Copyright 2022 Clayton Craft <clayton@craftyguy.net>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 package main
@@ -427,6 +427,15 @@ func getInitfsExtraFiles(files misc.StringSet, devinfo deviceinfo.DeviceInfo) er
 	log.Println("- Including extra binaries")
 	if err := getFiles(files, binariesExtra, true); err != nil {
 		return err
+	}
+
+	// Hook files & scripts
+	if exists("/etc/postmarketos-mkinitfs/files-extra") {
+		log.Println("- Including hook files")
+		hookFiles := getHookFiles("/etc/postmarketos-mkinitfs/files-extra")
+		if err := getFiles(files, hookFiles, true); err != nil {
+			return err
+		}
 	}
 
 	if exists("/usr/bin/osk-sdl") {
