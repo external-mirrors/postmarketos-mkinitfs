@@ -743,7 +743,7 @@ func getModule(files misc.StringSet, modName string, modDir string) error {
 	for _, dep := range deps {
 		p := filepath.Join(modDir, dep)
 		if !exists(p) {
-			log.Print(fmt.Sprintf("Tried to include a module that doesn't exist in the modules directory (%s): %s", modDir, p))
+			log.Printf("Tried to include a module that doesn't exist in the modules directory (%s): %s", modDir, p)
 			return err
 		}
 		files[p] = false
