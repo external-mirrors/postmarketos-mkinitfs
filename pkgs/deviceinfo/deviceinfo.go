@@ -120,7 +120,10 @@ func nameToField(name string) string {
 		if p == "deviceinfo" {
 			continue
 		}
-		field = field + strings.Title(p)
+		if len(p) < 1 {
+			continue
+		}
+		field = field + strings.ToUpper(p[:1]) + p[1:]
 	}
 
 	return field
