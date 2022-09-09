@@ -63,6 +63,17 @@ func (archive *Archive) Write(path string, mode os.FileMode) error {
 	return nil
 }
 
+// Adds the given items in the map to the archive. The map format is {source path:dest path}.
+// Internally this just calls AddItem on each key,value pair in the map.
+func (archive *Archive) AddItems(paths map[string]string) error {
+	for s, d := range paths {
+		if err := archive.AddItem(s, d); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // Adds the given file or directory at "source" to the archive at "dest"
 func (archive *Archive) AddItem(source string, dest string) error {
 
