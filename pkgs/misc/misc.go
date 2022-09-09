@@ -1,4 +1,4 @@
-// Copyright 2021 Clayton Craft <clayton@craftyguy.net>
+// Copyright 2022 Clayton Craft <clayton@craftyguy.net>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 package misc
@@ -47,4 +47,12 @@ func FreeSpace(path string) (uint64, error) {
 	unix.Statfs(path, &stat)
 	size := stat.Bavail * uint64(stat.Bsize)
 	return size, nil
+}
+
+// Merge the contents of "b" into "a", overwriting any previously existing keys
+// in "a"
+func Merge(a map[string]string, b map[string]string) {
+	for k, v := range b {
+		a[k] = v
+	}
 }
