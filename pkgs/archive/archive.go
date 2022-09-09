@@ -36,6 +36,11 @@ func New() (*Archive, error) {
 	return archive, nil
 }
 
+type archiveItem struct {
+	sourcePath string
+	header     *cpio.Header
+}
+
 func (archive *Archive) Write(path string, mode os.FileMode) error {
 	if err := archive.writeCpio(); err != nil {
 		return err
