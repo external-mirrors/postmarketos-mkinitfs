@@ -334,7 +334,7 @@ func getFdeFiles(files misc.StringSet, devinfo deviceinfo.DeviceInfo) error {
 	}
 	// TODO: this shouldn't be false? though some files (pointercal) don't always exist...
 	if err := getFiles(files, confFiles, false); err != nil {
-		return err
+		return fmt.Errorf("getFdeFiles: failed to add files: %w", err)
 	}
 
 	// osk-sdl
@@ -343,12 +343,12 @@ func getFdeFiles(files misc.StringSet, devinfo deviceinfo.DeviceInfo) error {
 		"/sbin/cryptsetup":    false,
 		"/usr/lib/libGL.so.1": false}
 	if err := getFiles(files, oskFiles, true); err != nil {
-		return err
+		return fmt.Errorf("getFdeFiles: failed to add files: %w", err)
 	}
 
 	fontFile, err := getOskConfFontPath("/etc/osk.conf")
 	if err != nil {
-		return err
+		return fmt.Errorf("getFdeFiles: failed to add file %q: %w", fontFile, err)
 	}
 	files[fontFile] = false
 
@@ -361,11 +361,10 @@ func getFdeFiles(files misc.StringSet, devinfo deviceinfo.DeviceInfo) error {
 		return nil
 	})
 	if err != nil {
-		log.Print("getBinaryDeps: failed to stat file")
-		return err
+		return fmt.Errorf("getFdeFiles: failed to add file %w", err)
 	}
 	if err := getFiles(files, dfbFiles, true); err != nil {
-		return err
+		return fmt.Errorf("getFdeFiles: failed to add files: %w", err)
 	}
 
 	// tslib
@@ -377,15 +376,14 @@ func getFdeFiles(files misc.StringSet, devinfo deviceinfo.DeviceInfo) error {
 		return nil
 	})
 	if err != nil {
-		log.Print("getBinaryDeps: failed to stat file")
-		return err
+		return fmt.Errorf("getFdeFiles: failed to add file: %w", err)
 	}
 	libts, _ := filepath.Glob("/usr/lib/libts*")
 	for _, file := range libts {
 		tslibFiles[file] = false
 	}
 	if err = getFiles(files, tslibFiles, true); err != nil {
-		return err
+		return fmt.Errorf("getFdeFiles: failed to add files: %w", err)
 	}
 
 	// mesa hw accel
@@ -398,7 +396,7 @@ func getFdeFiles(files misc.StringSet, devinfo deviceinfo.DeviceInfo) error {
 			"/usr/lib/xorg/modules/dri/" + devinfo.MesaDriver + "_dri.so": false,
 		}
 		if err := getFiles(files, mesaFiles, true); err != nil {
-			return err
+			return fmt.Errorf("getFdeFiles: failed to add files: %w", err)
 		}
 	}
 
