@@ -56,3 +56,23 @@ func Merge(a map[string]string, b map[string]string) {
 		a[k] = v
 	}
 }
+
+// Removes duplicate entries from the given string slice and returns a slice
+// with the unique values
+func RemoveDuplicates(in []string) (out []string) {
+	// use a map to "remove" duplicates. the value in the map is totally
+	// irrelevant
+	outMap := make(map[string]bool)
+	for _, s := range in {
+		if ok := outMap[s]; !ok {
+			outMap[s] = true
+		}
+	}
+
+	out = make([]string, 0, len(outMap))
+	for k := range outMap {
+		out = append(out, k)
+	}
+
+	return
+}
