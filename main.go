@@ -649,7 +649,7 @@ func generateInitfs(name string, path string, kernVer string, devinfo deviceinfo
 		return err
 	}
 
-	if err := initfsArchive.AddFile("/usr/share/postmarketos-mkinitfs/init.sh", "/init"); err != nil {
+	if err := initfsArchive.AddItem("/usr/share/postmarketos-mkinitfs/init.sh", "/init"); err != nil {
 		return err
 	}
 
@@ -658,13 +658,13 @@ func generateInitfs(name string, path string, kernVer string, devinfo deviceinfo
 	splashFiles, _ := filepath.Glob("/usr/share/postmarketos-splashes/*.ppm.gz")
 	for _, file := range splashFiles {
 		// splash images are expected at /<file>
-		if err := initfsArchive.AddFile(file, filepath.Join("/", filepath.Base(file))); err != nil {
+		if err := initfsArchive.AddItem(file, filepath.Join("/", filepath.Base(file))); err != nil {
 			return err
 		}
 	}
 
 	// initfs_functions
-	if err := initfsArchive.AddFile("/usr/share/postmarketos-mkinitfs/init_functions.sh", "/init_functions.sh"); err != nil {
+	if err := initfsArchive.AddItem("/usr/share/postmarketos-mkinitfs/init_functions.sh", "/init_functions.sh"); err != nil {
 		return err
 	}
 

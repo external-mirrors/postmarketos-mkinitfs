@@ -9,6 +9,7 @@ import (
 	"github.com/cavaliercoder/go-cpio"
 	"github.com/klauspost/pgzip"
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/pkgs/misc"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -57,7 +58,22 @@ func (archive *Archive) Write(path string, mode os.FileMode) error {
 	return nil
 }
 
-func (archive *Archive) AddFile(file string, dest string) error {
+// Adds the given file or directory at "source" to the archive at "dest"
+func (archive *Archive) AddItem(source string, dest string) error {
+
+	sourceStat, err := os.Lstat(source)
+	if err != nil {
+		return fmt.Errorf("AddItem: failed to get stat for %q: %w", source, err)
+	}
+
+	if sourceStat.Mode()&os.ModeDir != 0 {
+		return archive.addDir(dest)
+	}
+
+	return archive.addFile(source, dest)
+}
+
+func (archive *Archive) addFile(file string, dest string) error {
 	if err := archive.addDir(filepath.Dir(dest)); err != nil {
 		return err
 	}
@@ -111,7 +127,7 @@ func (archive *Archive) AddFile(file string, dest string) error {
 		// TODO: add verbose mode, print stuff like this:
 		// log.Printf("symlink: %q, target: %q", file, target)
 		// write symlink target
-		err = archive.AddFile(target, target)
+		err = archive.addFile(target, target)
 		return err
 	}
 
@@ -186,7 +202,7 @@ func (archive *Archive) writeCpio() error {
 		if imported {
 			continue
 		}
-		if err := archive.AddFile(file, file); err != nil {
+		if err := archive.addFile(file, file); err != nil {
 			return err
 		}
 	}
