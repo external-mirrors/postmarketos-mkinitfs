@@ -78,28 +78,28 @@ func (archive *Archive) AddItem(source string, dest string) error {
 	return archive.addFile(source, dest)
 }
 
-func (archive *Archive) addFile(file string, dest string) error {
+func (archive *Archive) addFile(source string, dest string) error {
 	if err := archive.addDir(filepath.Dir(dest)); err != nil {
 		return err
 	}
 
-	if archive.Files[file] {
+	if archive.Files[source] {
 		// Already written to cpio
 		return nil
 	}
 
-	fileStat, err := os.Lstat(file)
+	sourceStat, err := os.Lstat(source)
 	if err != nil {
-		log.Print("AddFile: failed to stat file: ", file)
+		log.Print("addFile: failed to stat file: ", source)
 		return err
 	}
 
 	// Symlink: write symlink to archive then set 'file' to link target
-	if fileStat.Mode()&os.ModeSymlink != 0 {
+	if sourceStat.Mode()&os.ModeSymlink != 0 {
 		// log.Printf("File %q is a symlink", file)
-		target, err := os.Readlink(file)
+		target, err := os.Readlink(source)
 		if err != nil {
-			log.Print("AddFile: failed to get symlink target: ", file)
+			log.Print("addFile: failed to get symlink target: ", source)
 			return err
 		}
 
@@ -118,13 +118,13 @@ func (archive *Archive) addFile(file string, dest string) error {
 			return err
 		}
 
-		archive.Files[file] = true
+		archive.Files[source] = true
 		if filepath.Dir(target) == "." {
-			target = filepath.Join(filepath.Dir(file), target)
+			target = filepath.Join(filepath.Dir(source), target)
 		}
 		// make sure target is an absolute path
 		if !filepath.IsAbs(target) {
-			target, err = misc.RelativeSymlinkTargetToDir(target, filepath.Dir(file))
+			target, err = misc.RelativeSymlinkTargetToDir(target, filepath.Dir(source))
 			if err != nil {
 				return err
 			}
@@ -138,7 +138,7 @@ func (archive *Archive) addFile(file string, dest string) error {
 
 	// log.Printf("writing file: %q", file)
 
-	fd, err := os.Open(file)
+	fd, err := os.Open(source)
 	if err != nil {
 		return err
 	}
@@ -147,8 +147,8 @@ func (archive *Archive) addFile(file string, dest string) error {
 	destFilename := strings.TrimPrefix(dest, "/")
 	hdr := &cpio.Header{
 		Name: destFilename,
-		Mode: cpio.FileMode(fileStat.Mode().Perm()),
-		Size: fileStat.Size(),
+		Mode: cpio.FileMode(sourceStat.Mode().Perm()),
+		Size: sourceStat.Size(),
 		// Checksum: 1,
 	}
 	if err := archive.cpioWriter.WriteHeader(hdr); err != nil {
@@ -159,7 +159,7 @@ func (archive *Archive) addFile(file string, dest string) error {
 		return err
 	}
 
-	archive.Files[file] = true
+	archive.Files[source] = true
 
 	return nil
 }
