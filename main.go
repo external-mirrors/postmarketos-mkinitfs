@@ -10,7 +10,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -54,7 +53,7 @@ func main() {
 	}
 
 	// temporary working dir
-	workDir, err := ioutil.TempDir("", "mkinitfs")
+	workDir, err := os.MkdirTemp("", "mkinitfs")
 	if err != nil {
 		log.Fatal("Unable to create temporary work directory:", err)
 	}
@@ -150,7 +149,7 @@ func exists(file string) bool {
 }
 
 func getHookFiles(filesdir string) misc.StringSet {
-	fileInfo, err := ioutil.ReadDir(filesdir)
+	fileInfo, err := os.ReadDir(filesdir)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -612,7 +611,7 @@ func copyUbootFiles(path string, devinfo deviceinfo.DeviceInfo) error {
 	}
 
 	srcDir := filepath.Join("/usr/share/u-boot", devinfo.UbootBoardname)
-	entries, err := ioutil.ReadDir(srcDir)
+	entries, err := os.ReadDir(srcDir)
 	if err != nil {
 		return err
 	}
