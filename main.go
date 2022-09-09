@@ -205,7 +205,7 @@ func getBinaryDeps(files misc.StringSet, file string) error {
 	// get dependencies for binaries
 	fd, err := elf.Open(file)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	libs, _ := fd.ImportedLibraries()
 	fd.Close()
@@ -231,7 +231,7 @@ func getBinaryDeps(files misc.StringSet, file string) error {
 			}
 		}
 		if !found {
-			log.Fatalf("Unable to locate dependency for %q: %s", file, lib)
+			return fmt.Errorf("Unable to locate dependency for %q: %s", file, lib)
 		}
 	}
 
