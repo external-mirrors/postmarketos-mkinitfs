@@ -729,13 +729,12 @@ func getModule(files misc.StringSet, modName string, modDir string) error {
 
 	modDep := filepath.Join(modDir, "modules.dep")
 	if !exists(modDep) {
-		log.Fatal("Kernel module.dep not found: ", modDir)
+		return fmt.Errorf("kernel module.dep not found: %s", modDir)
 	}
 
 	fd, err := os.Open(modDep)
 	if err != nil {
-		log.Print("Unable to open modules.dep: ", modDep)
-		return err
+		return fmt.Errorf("unable to open modules.dep: %w", err)
 	}
 	defer fd.Close()
 
@@ -747,8 +746,7 @@ func getModule(files misc.StringSet, modName string, modDir string) error {
 	for _, dep := range deps {
 		p := filepath.Join(modDir, dep)
 		if !exists(p) {
-			log.Printf("Tried to include a module that doesn't exist in the modules directory (%s): %s", modDir, p)
-			return err
+			return fmt.Errorf("Tried to include a module that doesn't exist in the modules directory (%s): %s", modDir, p)
 		}
 		files[p] = false
 	}
