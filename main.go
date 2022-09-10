@@ -148,30 +148,30 @@ func exists(file string) bool {
 	return false
 }
 
-func getHookFiles(filesdir string) misc.StringSet {
+func getHookFiles(filesdir string) (misc.StringSet, error) {
 	fileInfo, err := os.ReadDir(filesdir)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	files := make(misc.StringSet)
 	for _, file := range fileInfo {
 		path := filepath.Join(filesdir, file.Name())
 		f, err := os.Open(path)
 		if err != nil {
-			log.Fatal(err)
+			return nil, err
 		}
 		defer f.Close()
 		s := bufio.NewScanner(f)
 		for s.Scan() {
 			if err := getFiles(files, misc.StringSet{s.Text(): true}, true); err != nil {
-				log.Fatalf("Unable to find file %q required by %q", s.Text(), path)
+				return nil, fmt.Errorf("unable to find file %q required by %q", s.Text(), path)
 			}
 		}
 		if err := s.Err(); err != nil {
-			log.Fatal(err)
+			return nil, err
 		}
 	}
-	return files
+	return files, nil
 }
 
 // Recursively list all dependencies for a given ELF binary
@@ -429,7 +429,11 @@ func getInitfsExtraFiles(files misc.StringSet, devinfo deviceinfo.DeviceInfo) er
 	// Hook files & scripts
 	if exists("/etc/postmarketos-mkinitfs/files-extra") {
 		log.Println("- Including hook files")
-		hookFiles := getHookFiles("/etc/postmarketos-mkinitfs/files-extra")
+		var hookFiles misc.StringSet
+		hookFiles, err := getHookFiles("/etc/postmarketos-mkinitfs/files-extra")
+		if err != nil {
+			return err
+		}
 		if err := getFiles(files, hookFiles, true); err != nil {
 			return err
 		}
@@ -462,7 +466,10 @@ func getInitfsFiles(files misc.StringSet, devinfo deviceinfo.DeviceInfo) error {
 	// Hook files & scripts
 	if exists("/etc/postmarketos-mkinitfs/files") {
 		log.Println("- Including hook files")
-		hookFiles := getHookFiles("/etc/postmarketos-mkinitfs/files")
+		hookFiles, err := getHookFiles("/etc/postmarketos-mkinitfs/files")
+		if err != nil {
+			return err
+		}
 		if err := getFiles(files, hookFiles, true); err != nil {
 			return err
 		}
