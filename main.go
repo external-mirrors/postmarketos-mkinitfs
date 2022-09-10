@@ -674,7 +674,9 @@ func generateInitfs(name string, path string, kernVer string, devinfo deviceinfo
 		"/dev", "/tmp", "/lib", "/boot", "/sysroot", "/etc",
 	}
 	for _, dir := range requiredDirs {
-		initfsArchive.Dirs[dir] = false
+		if err := initfsArchive.AddItem(dir, dir); err != nil {
+			return err
+		}
 	}
 
 	if files, err := getInitfsFiles(devinfo); err != nil {
