@@ -180,16 +180,14 @@ func getBinaryDeps(file string) (files []string, err error) {
 	// if file is a symlink, resolve dependencies for target
 	fileStat, err := os.Lstat(file)
 	if err != nil {
-		log.Print("getBinaryDeps: failed to stat file")
-		return files, err
+		return nil, fmt.Errorf("getBinaryDeps: failed to stat file %q: %w", file, err)
 	}
 
 	// Symlink: write symlink to archive then set 'file' to link target
 	if fileStat.Mode()&os.ModeSymlink != 0 {
 		target, err := os.Readlink(file)
 		if err != nil {
-			log.Print("getBinaryDeps: unable to read symlink: ", file)
-			return files, err
+			return nil, fmt.Errorf("getBinaryDeps: unable to read symlink %q: %w", file, err)
 		}
 		if !filepath.IsAbs(target) {
 			target, err = misc.RelativeSymlinkTargetToDir(target, filepath.Dir(file))
@@ -208,7 +206,7 @@ func getBinaryDeps(file string) (files []string, err error) {
 	// get dependencies for binaries
 	fd, err := elf.Open(file)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getBinaryDeps: unable to open elf binary %q: %w", file, err)
 	}
 	libs, _ := fd.ImportedLibraries()
 	fd.Close()
@@ -235,7 +233,7 @@ func getBinaryDeps(file string) (files []string, err error) {
 			}
 		}
 		if !found {
-			return nil, fmt.Errorf("Unable to locate dependency for %q: %s", file, lib)
+			return nil, fmt.Errorf("getBinaryDeps: unable to locate dependency for %q: %s", file, lib)
 		}
 	}
 
