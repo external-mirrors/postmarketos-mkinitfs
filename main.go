@@ -163,7 +163,7 @@ func getHookFiles(filesdir string) misc.StringSet {
 		defer f.Close()
 		s := bufio.NewScanner(f)
 		for s.Scan() {
-			if err := getFile(files, s.Text(), true); err != nil {
+			if err := getFiles(files, misc.StringSet{s.Text(): true}, true); err != nil {
 				log.Fatalf("Unable to find file %q required by %q", s.Text(), path)
 			}
 		}
