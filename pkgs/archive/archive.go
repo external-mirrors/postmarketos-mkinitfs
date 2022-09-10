@@ -47,17 +47,16 @@ func (archive *Archive) Write(path string, mode os.FileMode) error {
 	}
 
 	if err := archive.cpioWriter.Close(); err != nil {
-		return err
+		return fmt.Errorf("archive.Write: error closing archive: %w", err)
 	}
 
 	// Write archive to path
 	if err := archive.writeCompressed(path, mode); err != nil {
-		log.Print("Unable to write archive to location: ", path)
-		return err
+		return fmt.Errorf("unable to write archive to location %q: %w", path, err)
 	}
 
 	if err := os.Chmod(path, mode); err != nil {
-		return err
+		return fmt.Errorf("unable to chmod %q to %s: %w", path, mode, err)
 	}
 
 	return nil
