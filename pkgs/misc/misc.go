@@ -10,8 +10,6 @@ import (
 	"path/filepath"
 )
 
-type StringSet map[string]bool
-
 // Converts a relative symlink target path (e.g. ../../lib/foo.so), that is
 // absolute path
 func RelativeSymlinkTargetToDir(symPath string, dir string) (string, error) {
