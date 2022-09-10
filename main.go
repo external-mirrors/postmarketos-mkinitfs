@@ -546,8 +546,7 @@ func getInitfsModules(devinfo deviceinfo.DeviceInfo, kernelVer string) (files []
 			dirs, _ := filepath.Glob(dir)
 			for _, d := range dirs {
 				if filelist, err := getModulesInDir(d); err != nil {
-					log.Print("Unable to get modules in dir: ", d)
-					return nil, err
+					return nil, fmt.Errorf("getInitfsModules: unable to get modules dir %q: %w", d, err)
 				} else {
 					files = append(files, filelist...)
 				}
@@ -555,8 +554,7 @@ func getInitfsModules(devinfo deviceinfo.DeviceInfo, kernelVer string) (files []
 		} else if dir == "" {
 			// item is a module name
 			if filelist, err := getModule(file, modDir); err != nil {
-				log.Print("Unable to get module: ", file)
-				return nil, err
+				return nil, fmt.Errorf("getInitfsModules: unable to get module %q: %w", file, err)
 			} else {
 				files = append(files, filelist...)
 			}
@@ -568,8 +566,7 @@ func getInitfsModules(devinfo deviceinfo.DeviceInfo, kernelVer string) (files []
 	// deviceinfo modules
 	for _, module := range strings.Fields(devinfo.ModulesInitfs) {
 		if filelist, err := getModule(module, modDir); err != nil {
-			log.Print("Unable to get modules from deviceinfo")
-			return nil, err
+			return nil, fmt.Errorf("getInitfsModules: unable to get modules from deviceinfo: %w", err)
 		} else {
 			files = append(files, filelist...)
 		}
@@ -580,15 +577,13 @@ func getInitfsModules(devinfo deviceinfo.DeviceInfo, kernelVer string) (files []
 	for _, modFile := range initfsModFiles {
 		f, err := os.Open(modFile)
 		if err != nil {
-			log.Print("getInitfsModules: unable to open mkinitfs modules file: ", modFile)
-			return nil, err
+			return nil, fmt.Errorf("getInitfsModules: unable to open mkinitfs modules file %q: %w", modFile, err)
 		}
 		defer f.Close()
 		s := bufio.NewScanner(f)
 		for s.Scan() {
 			if filelist, err := getModule(s.Text(), modDir); err != nil {
-				log.Print("getInitfsModules: unable to get module file: ", s.Text())
-				return nil, err
+				return nil, fmt.Errorf("getInitfsModules: unable to get module file %q: %w", s.Text(), err)
 			} else {
 				files = append(files, filelist...)
 			}
