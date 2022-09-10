@@ -148,12 +148,11 @@ func exists(file string) bool {
 	return false
 }
 
-func getHookFiles(filesdir string) (misc.StringSet, error) {
+func getHookFiles(filesdir string) (files []string, err error) {
 	fileInfo, err := os.ReadDir(filesdir)
 	if err != nil {
 		return nil, err
 	}
-	files := make(misc.StringSet)
 	for _, file := range fileInfo {
 		path := filepath.Join(filesdir, file.Name())
 		f, err := os.Open(path)
@@ -163,8 +162,10 @@ func getHookFiles(filesdir string) (misc.StringSet, error) {
 		defer f.Close()
 		s := bufio.NewScanner(f)
 		for s.Scan() {
-			if err := getFiles(files, misc.StringSet{s.Text(): true}, true); err != nil {
+			if filelist, err := getFiles([]string{s.Text()}, true); err != nil {
 				return nil, fmt.Errorf("unable to find file %q required by %q", s.Text(), path)
+			} else {
+				files = append(files, filelist...)
 			}
 		}
 		if err := s.Err(); err != nil {
@@ -175,12 +176,12 @@ func getHookFiles(filesdir string) (misc.StringSet, error) {
 }
 
 // Recursively list all dependencies for a given ELF binary
-func getBinaryDeps(files misc.StringSet, file string) error {
+func getBinaryDeps(file string) (files []string, err error) {
 	// if file is a symlink, resolve dependencies for target
 	fileStat, err := os.Lstat(file)
 	if err != nil {
 		log.Print("getBinaryDeps: failed to stat file")
-		return err
+		return files, err
 	}
 
 	// Symlink: write symlink to archive then set 'file' to link target
@@ -188,31 +189,33 @@ func getBinaryDeps(files misc.StringSet, file string) error {
 		target, err := os.Readlink(file)
 		if err != nil {
 			log.Print("getBinaryDeps: unable to read symlink: ", file)
-			return err
+			return files, err
 		}
 		if !filepath.IsAbs(target) {
 			target, err = misc.RelativeSymlinkTargetToDir(target, filepath.Dir(file))
 			if err != nil {
-				return err
+				return files, err
 			}
 		}
-		if err := getBinaryDeps(files, target); err != nil {
-			return err
+		binaryDepFiles, err := getBinaryDeps(target)
+		if err != nil {
+			return files, err
 		}
-		return err
+		files = append(files, binaryDepFiles...)
+		return files, err
 	}
 
 	// get dependencies for binaries
 	fd, err := elf.Open(file)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	libs, _ := fd.ImportedLibraries()
 	fd.Close()
-	files[file] = false
+	files = append(files, file)
 
 	if len(libs) == 0 {
-		return err
+		return files, err
 	}
 
 	libdirs := []string{"/usr/lib", "/lib"}
@@ -221,51 +224,57 @@ func getBinaryDeps(files misc.StringSet, file string) error {
 		for _, libdir := range libdirs {
 			path := filepath.Join(libdir, lib)
 			if _, err := os.Stat(path); err == nil {
-				err := getBinaryDeps(files, path)
+				binaryDepFiles, err := getBinaryDeps(path)
 				if err != nil {
-					return err
+					return files, err
 				}
-				files[path] = false
+				files = append(files, binaryDepFiles...)
+				files = append(files, path)
 				found = true
 				break
 			}
 		}
 		if !found {
-			return fmt.Errorf("Unable to locate dependency for %q: %s", file, lib)
+			return nil, fmt.Errorf("Unable to locate dependency for %q: %s", file, lib)
 		}
 	}
 
-	return nil
+	return
 }
 
-func getFiles(files misc.StringSet, newFiles misc.StringSet, required bool) error {
-	for file := range newFiles {
-		err := getFile(files, file, required)
+func getFiles(list []string, required bool) (files []string, err error) {
+	for _, file := range list {
+		filelist, err := getFile(file, required)
 		if err != nil {
-			return err
+			return nil, err
 		}
+		files = append(files, filelist...)
 	}
-	return nil
+
+	files = misc.RemoveDuplicates(files)
+	return
 }
 
-func getFile(files misc.StringSet, file string, required bool) error {
+func getFile(file string, required bool) (files []string, err error) {
 	// Expand glob expression
 	expanded, _ := filepath.Glob(file)
 	if len(expanded) > 0 && expanded[0] != file {
 		for _, path := range expanded {
-			if err := getFile(files, path, required); err != nil {
-				return err
+			if globFiles, err := getFile(path, required); err != nil {
+				return files, err
+			} else {
+				files = append(files, globFiles...)
 			}
 		}
-		return nil
+		return misc.RemoveDuplicates(files), nil
 	}
 
 	fileInfo, err := os.Stat(file)
 	if err != nil {
 		if required {
-			return errors.New("getFile: File does not exist :" + file)
+			return files, errors.New("getFile: File does not exist :" + file)
 		}
-		return nil
+		return files, nil
 	}
 
 	if fileInfo.IsDir() {
@@ -277,27 +286,31 @@ func getFile(files misc.StringSet, file string, required bool) error {
 			if f.IsDir() {
 				return nil
 			}
-			return getFile(files, path, required)
+			newFiles, err := getFile(path, required)
+			if err != nil {
+				return err
+			}
+			files = append(files, newFiles...)
+			return nil
 		})
 		if err != nil {
-			return err
+			return files, err
 		}
-		return nil
+	} else {
+		files = append(files, file)
+
+		// get dependencies for binaries
+		if _, err := elf.Open(file); err == nil {
+			if binaryDepFiles, err := getBinaryDeps(file); err != nil {
+				return files, err
+			} else {
+				files = append(files, binaryDepFiles...)
+			}
+		}
 	}
 
-	files[file] = false
-
-	// get dependencies for binaries
-	if _, err := elf.Open(file); err != nil {
-		// file is not an elf, so don't resolve lib dependencies
-		return nil
-	}
-
-	if err := getBinaryDeps(files, file); err != nil {
-		return err
-	}
-
-	return nil
+	files = misc.RemoveDuplicates(files)
+	return
 }
 
 func getOskConfFontPath(oskConfPath string) (string, error) {
@@ -324,182 +337,199 @@ func getOskConfFontPath(oskConfPath string) (string, error) {
 
 // Get a list of files and their dependencies related to supporting rootfs full
 // disk (d)encryption
-func getFdeFiles(files misc.StringSet, devinfo deviceinfo.DeviceInfo) error {
-	confFiles := misc.StringSet{
-		"/etc/osk.conf":   false,
-		"/etc/ts.conf":    false,
-		"/etc/pointercal": false,
-		"/etc/fb.modes":   false,
-		"/etc/directfbrc": false,
+func getFdeFiles(devinfo deviceinfo.DeviceInfo) (files []string, err error) {
+	confFiles := []string{
+		"/etc/osk.conf",
+		"/etc/ts.conf",
+		"/etc/pointercal",
+		"/etc/fb.modes",
+		"/etc/directfbrc",
 	}
 	// TODO: this shouldn't be false? though some files (pointercal) don't always exist...
-	if err := getFiles(files, confFiles, false); err != nil {
-		return fmt.Errorf("getFdeFiles: failed to add files: %w", err)
+	if files, err = getFiles(confFiles, false); err != nil {
+		return nil, fmt.Errorf("getFdeFiles: failed to add files: %w", err)
 	}
 
 	// osk-sdl
-	oskFiles := misc.StringSet{
-		"/usr/bin/osk-sdl":    false,
-		"/sbin/cryptsetup":    false,
-		"/usr/lib/libGL.so.1": false}
-	if err := getFiles(files, oskFiles, true); err != nil {
-		return fmt.Errorf("getFdeFiles: failed to add files: %w", err)
+	oskFiles := []string{
+		"/usr/bin/osk-sdl",
+		"/sbin/cryptsetup",
+		"/usr/lib/libGL.so.1",
+	}
+	if filelist, err := getFiles(oskFiles, true); err != nil {
+		return nil, fmt.Errorf("getFdeFiles: failed to add files: %w", err)
+	} else {
+		files = append(files, filelist...)
 	}
 
 	fontFile, err := getOskConfFontPath("/etc/osk.conf")
 	if err != nil {
-		return fmt.Errorf("getFdeFiles: failed to add file %q: %w", fontFile, err)
+		return nil, fmt.Errorf("getFdeFiles: failed to add file %q: %w", fontFile, err)
 	}
-	files[fontFile] = false
+	files = append(files, fontFile)
 
 	// Directfb
-	dfbFiles := make(misc.StringSet)
+	dfbFiles := []string{}
 	err = filepath.Walk("/usr/lib/directfb-1.7-7", func(path string, f os.FileInfo, err error) error {
 		if filepath.Ext(path) == ".so" {
-			dfbFiles[path] = false
+			dfbFiles = append(dfbFiles, path)
 		}
 		return nil
 	})
 	if err != nil {
-		return fmt.Errorf("getFdeFiles: failed to add file %w", err)
+		return nil, fmt.Errorf("getFdeFiles: failed to add file %w", err)
 	}
-	if err := getFiles(files, dfbFiles, true); err != nil {
-		return fmt.Errorf("getFdeFiles: failed to add files: %w", err)
+	if filelist, err := getFiles(dfbFiles, true); err != nil {
+		return nil, fmt.Errorf("getFdeFiles: failed to add files: %w", err)
+	} else {
+		files = append(files, filelist...)
 	}
 
 	// tslib
-	tslibFiles := make(misc.StringSet)
+	tslibFiles := []string{}
 	err = filepath.Walk("/usr/lib/ts", func(path string, f os.FileInfo, err error) error {
 		if filepath.Ext(path) == ".so" {
-			tslibFiles[path] = false
+			tslibFiles = append(tslibFiles, path)
 		}
 		return nil
 	})
 	if err != nil {
-		return fmt.Errorf("getFdeFiles: failed to add file: %w", err)
+		return nil, fmt.Errorf("getFdeFiles: failed to add file: %w", err)
 	}
 	libts, _ := filepath.Glob("/usr/lib/libts*")
-	for _, file := range libts {
-		tslibFiles[file] = false
-	}
-	if err = getFiles(files, tslibFiles, true); err != nil {
-		return fmt.Errorf("getFdeFiles: failed to add files: %w", err)
+	tslibFiles = append(tslibFiles, libts...)
+	if filelist, err := getFiles(tslibFiles, true); err != nil {
+		return nil, fmt.Errorf("getFdeFiles: failed to add files: %w", err)
+	} else {
+		files = append(files, filelist...)
 	}
 
 	// mesa hw accel
 	if devinfo.MesaDriver != "" {
-		mesaFiles := misc.StringSet{
-			"/usr/lib/libEGL.so.1":    false,
-			"/usr/lib/libGLESv2.so.2": false,
-			"/usr/lib/libgbm.so.1":    false,
-			"/usr/lib/libudev.so.1":   false,
-			"/usr/lib/xorg/modules/dri/" + devinfo.MesaDriver + "_dri.so": false,
+		mesaFiles := []string{
+			"/usr/lib/libEGL.so.1",
+			"/usr/lib/libGLESv2.so.2",
+			"/usr/lib/libgbm.so.1",
+			"/usr/lib/libudev.so.1",
+			"/usr/lib/xorg/modules/dri/" + devinfo.MesaDriver + "_dri.so",
 		}
-		if err := getFiles(files, mesaFiles, true); err != nil {
-			return fmt.Errorf("getFdeFiles: failed to add files: %w", err)
+		if filelist, err := getFiles(mesaFiles, true); err != nil {
+			return nil, fmt.Errorf("getFdeFiles: failed to add files: %w", err)
+		} else {
+			files = append(files, filelist...)
 		}
 	}
 
-	return nil
+	return
 }
 
-func getHookScripts(files misc.StringSet) {
+func getHookScripts() (files []string) {
 	scripts, _ := filepath.Glob("/etc/postmarketos-mkinitfs/hooks/*.sh")
-	for _, script := range scripts {
-		files[script] = false
-	}
+	files = append(files, scripts...)
+
+	return
 }
 
-func getInitfsExtraFiles(files misc.StringSet, devinfo deviceinfo.DeviceInfo) error {
+func getInitfsExtraFiles(devinfo deviceinfo.DeviceInfo) (files []string, err error) {
 	log.Println("== Generating initramfs extra ==")
-	binariesExtra := misc.StringSet{
-		"/lib/libz.so.1":        false,
-		"/sbin/btrfs":           false,
-		"/sbin/dmsetup":         false,
-		"/sbin/e2fsck":          false,
-		"/usr/sbin/parted":      false,
-		"/usr/sbin/resize2fs":   false,
-		"/usr/sbin/resize.f2fs": false,
+	binariesExtra := []string{
+		"/lib/libz.so.1",
+		"/sbin/btrfs",
+		"/sbin/dmsetup",
+		"/sbin/e2fsck",
+		"/usr/sbin/parted",
+		"/usr/sbin/resize2fs",
+		"/usr/sbin/resize.f2fs",
 	}
 	log.Println("- Including extra binaries")
-	if err := getFiles(files, binariesExtra, true); err != nil {
-		return err
+	if filelist, err := getFiles(binariesExtra, true); err != nil {
+		return nil, err
+	} else {
+		files = append(files, filelist...)
 	}
 
 	// Hook files & scripts
 	if exists("/etc/postmarketos-mkinitfs/files-extra") {
 		log.Println("- Including hook files")
-		var hookFiles misc.StringSet
+		var hookFiles []string
 		hookFiles, err := getHookFiles("/etc/postmarketos-mkinitfs/files-extra")
 		if err != nil {
-			return err
+			return nil, err
 		}
-		if err := getFiles(files, hookFiles, true); err != nil {
-			return err
+		if filelist, err := getFiles(hookFiles, true); err != nil {
+			return nil, err
+		} else {
+			files = append(files, filelist...)
 		}
 	}
 
 	if exists("/usr/bin/osk-sdl") {
 		log.Println("- Including FDE support")
-		if err := getFdeFiles(files, devinfo); err != nil {
-			return err
+		if fdeFiles, err := getFdeFiles(devinfo); err != nil {
+			return nil, err
+		} else {
+			files = append(files, fdeFiles...)
 		}
 	} else {
 		log.Println("- *NOT* including FDE support")
 	}
 
-	return nil
+	return
 }
 
-func getInitfsFiles(files misc.StringSet, devinfo deviceinfo.DeviceInfo) error {
+func getInitfsFiles(devinfo deviceinfo.DeviceInfo) (files []string, err error) {
 	log.Println("== Generating initramfs ==")
-	requiredFiles := misc.StringSet{
-		"/bin/busybox":        false,
-		"/bin/sh":             false,
-		"/bin/busybox-extras": false,
-		"/usr/sbin/telnetd":   false,
-		"/sbin/kpartx":        false,
-		"/etc/deviceinfo":     false,
-		"/usr/bin/unudhcpd":   false,
+	requiredFiles := []string{
+		"/bin/busybox",
+		"/bin/sh",
+		"/bin/busybox-extras",
+		"/usr/sbin/telnetd",
+		"/sbin/kpartx",
+		"/etc/deviceinfo",
+		"/usr/bin/unudhcpd",
 	}
 
 	// Hook files & scripts
 	if exists("/etc/postmarketos-mkinitfs/files") {
 		log.Println("- Including hook files")
-		hookFiles, err := getHookFiles("/etc/postmarketos-mkinitfs/files")
-		if err != nil {
-			return err
-		}
-		if err := getFiles(files, hookFiles, true); err != nil {
-			return err
+		if hookFiles, err := getHookFiles("/etc/postmarketos-mkinitfs/files"); err != nil {
+			return nil, err
+		} else {
+			if filelist, err := getFiles(hookFiles, true); err != nil {
+				return nil, err
+			} else {
+				files = append(files, filelist...)
+			}
 		}
 	}
+
 	log.Println("- Including hook scripts")
-	getHookScripts(files)
+	hookScripts := getHookScripts()
+	files = append(files, hookScripts...)
 
 	log.Println("- Including required binaries")
-	if err := getFiles(files, requiredFiles, true); err != nil {
-		return err
+	if filelist, err := getFiles(requiredFiles, true); err != nil {
+		return nil, err
+	} else {
+		files = append(files, filelist...)
 	}
 
-	return nil
+	return
 }
 
-func getInitfsModules(files misc.StringSet, devinfo deviceinfo.DeviceInfo, kernelVer string) error {
+func getInitfsModules(devinfo deviceinfo.DeviceInfo, kernelVer string) (files []string, err error) {
 	log.Println("- Including kernel modules")
 
 	modDir := filepath.Join("/lib/modules", kernelVer)
 	if !exists(modDir) {
 		// dir /lib/modules/<kernel> if kernel built without module support, so just print a message
 		log.Printf("-- kernel module directory not found: %q, not including modules", modDir)
-		return nil
+		return
 	}
 
 	// modules.* required by modprobe
 	modprobeFiles, _ := filepath.Glob(filepath.Join(modDir, "modules.*"))
-	for _, file := range modprobeFiles {
-		files[file] = false
-	}
+	files = append(files, modprobeFiles...)
 
 	// module name (without extension), or directory (trailing slash is important! globs OK)
 	requiredModules := []string{
@@ -517,16 +547,20 @@ func getInitfsModules(files misc.StringSet, devinfo deviceinfo.DeviceInfo, kerne
 			dir = filepath.Join(modDir, dir)
 			dirs, _ := filepath.Glob(dir)
 			for _, d := range dirs {
-				if err := getModulesInDir(files, d); err != nil {
+				if filelist, err := getModulesInDir(d); err != nil {
 					log.Print("Unable to get modules in dir: ", d)
-					return err
+					return nil, err
+				} else {
+					files = append(files, filelist...)
 				}
 			}
 		} else if dir == "" {
 			// item is a module name
-			if err := getModule(files, file, modDir); err != nil {
+			if filelist, err := getModule(file, modDir); err != nil {
 				log.Print("Unable to get module: ", file)
-				return err
+				return nil, err
+			} else {
+				files = append(files, filelist...)
 			}
 		} else {
 			log.Printf("Unknown module entry: %q", item)
@@ -535,9 +569,11 @@ func getInitfsModules(files misc.StringSet, devinfo deviceinfo.DeviceInfo, kerne
 
 	// deviceinfo modules
 	for _, module := range strings.Fields(devinfo.ModulesInitfs) {
-		if err := getModule(files, module, modDir); err != nil {
+		if filelist, err := getModule(module, modDir); err != nil {
 			log.Print("Unable to get modules from deviceinfo")
-			return err
+			return nil, err
+		} else {
+			files = append(files, filelist...)
 		}
 	}
 
@@ -547,19 +583,21 @@ func getInitfsModules(files misc.StringSet, devinfo deviceinfo.DeviceInfo, kerne
 		f, err := os.Open(modFile)
 		if err != nil {
 			log.Print("getInitfsModules: unable to open mkinitfs modules file: ", modFile)
-			return err
+			return nil, err
 		}
 		defer f.Close()
 		s := bufio.NewScanner(f)
 		for s.Scan() {
-			if err := getModule(files, s.Text(), modDir); err != nil {
+			if filelist, err := getModule(s.Text(), modDir); err != nil {
 				log.Print("getInitfsModules: unable to get module file: ", s.Text())
-				return err
+				return nil, err
+			} else {
+				files = append(files, filelist...)
 			}
 		}
 	}
 
-	return nil
+	return
 }
 
 func getKernelReleaseFile() (string, error) {
@@ -646,12 +684,32 @@ func generateInitfs(name string, path string, kernVer string, devinfo deviceinfo
 		initfsArchive.Dirs[dir] = false
 	}
 
-	if err := getInitfsFiles(initfsArchive.Files, devinfo); err != nil {
+	if files, err := getInitfsFiles(devinfo); err != nil {
 		return err
+	} else {
+		items := make(map[string]string)
+		// copy files into a map, where the source(key) and dest(value) are the
+		// same
+		for _, f := range files {
+			items[f] = f
+		}
+		if err := initfsArchive.AddItems(items); err != nil {
+			return err
+		}
 	}
 
-	if err := getInitfsModules(initfsArchive.Files, devinfo, kernVer); err != nil {
+	if files, err := getInitfsModules(devinfo, kernVer); err != nil {
 		return err
+	} else {
+		items := make(map[string]string)
+		// copy files into a map, where the source(key) and dest(value) are the
+		// same
+		for _, f := range files {
+			items[f] = f
+		}
+		if err := initfsArchive.AddItems(items); err != nil {
+			return err
+		}
 	}
 
 	if err := initfsArchive.AddItem("/usr/share/postmarketos-mkinitfs/init.sh", "/init"); err != nil {
@@ -687,8 +745,19 @@ func generateInitfsExtra(name string, path string, devinfo deviceinfo.DeviceInfo
 		return err
 	}
 
-	if err := getInitfsExtraFiles(initfsExtraArchive.Files, devinfo); err != nil {
+	if files, err := getInitfsExtraFiles(devinfo); err != nil {
 		return err
+	} else {
+
+		items := make(map[string]string)
+		// copy files into a map, where the source(key) and dest(value) are the
+		// same
+		for _, f := range files {
+			items[f] = f
+		}
+		if err := initfsExtraArchive.AddItems(items); err != nil {
+			return err
+		}
 	}
 
 	log.Println("- Writing and verifying initramfs-extra archive")
@@ -703,20 +772,20 @@ func stripExts(file string) string {
 	return strings.Split(file, ".")[0]
 }
 
-func getModulesInDir(files misc.StringSet, modPath string) error {
-	err := filepath.Walk(modPath, func(path string, f os.FileInfo, err error) error {
+func getModulesInDir(modPath string) (files []string, err error) {
+	err = filepath.Walk(modPath, func(path string, f os.FileInfo, err error) error {
 		// TODO: need to support more extensions?
 		if filepath.Ext(path) != ".ko" && filepath.Ext(path) != ".xz" {
 			return nil
 		}
-		files[path] = false
+		files = append(files, path)
 		return nil
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return
 }
 
 // Given a module name, e.g. 'dwc_wdt', resolve the full path to the module
@@ -725,33 +794,33 @@ func getModulesInDir(files misc.StringSet, modPath string) error {
 // have been built into the kernel
 // TODO: look for it in modules.builtin, and make it fatal if it can't be found
 // anywhere
-func getModule(files misc.StringSet, modName string, modDir string) error {
+func getModule(modName string, modDir string) (files []string, err error) {
 
 	modDep := filepath.Join(modDir, "modules.dep")
 	if !exists(modDep) {
-		return fmt.Errorf("kernel module.dep not found: %s", modDir)
+		return nil, fmt.Errorf("kernel module.dep not found: %s", modDir)
 	}
 
 	fd, err := os.Open(modDep)
 	if err != nil {
-		return fmt.Errorf("unable to open modules.dep: %w", err)
+		return nil, fmt.Errorf("unable to open modules.dep: %w", err)
 	}
 	defer fd.Close()
 
 	deps, err := getModuleDeps(modName, fd)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	for _, dep := range deps {
 		p := filepath.Join(modDir, dep)
 		if !exists(p) {
-			return fmt.Errorf("Tried to include a module that doesn't exist in the modules directory (%s): %s", modDir, p)
+			return nil, fmt.Errorf("Tried to include a module that doesn't exist in the modules directory (%s): %s", modDir, p)
 		}
-		files[p] = false
+		files = append(files, p)
 	}
 
-	return err
+	return
 }
 
 // Get the canonicalized name for the module as represented in the given modules.dep io.reader
