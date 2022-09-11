@@ -24,25 +24,13 @@ stages:
     - merge_requests
     - tags
 
-# device documentation
-gofmt linting:
-  stage: lint
-  allow_failure: true
-  <<: *only-default
-  before_script:
-    # specific mirror used because staticcheck hasn't made it to the other mirrors yet...
-    - apk -q update --repository http://dl-4.alpinelinux.org/alpine/edge/testing
-    - apk -q add --repository http://dl-4.alpinelinux.org/alpine/edge/testing go staticcheck
-  script:
-    - .ci/check_linting.sh
-
 build:
   stage: build
   <<: *only-default
   before_script:
-    - apk -q add go
+    - apk -q add go staticcheck make
   script:
-    - go build -v
-    - go test ./...
+    - make test
+    - make
   artifacts:
     expire_in: 1 week
