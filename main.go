@@ -810,7 +810,7 @@ func getModule(modName string, modDir string) (files []string, err error) {
 	for _, dep := range deps {
 		p := filepath.Join(modDir, dep)
 		if !exists(p) {
-			return nil, fmt.Errorf("Tried to include a module that doesn't exist in the modules directory (%s): %s", modDir, p)
+			return nil, fmt.Errorf("tried to include a module that doesn't exist in the modules directory (%s): %s", modDir, p)
 		}
 		files = append(files, p)
 	}
