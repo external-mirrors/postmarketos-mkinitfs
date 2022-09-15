@@ -255,7 +255,10 @@ func getFiles(list []string, required bool) (files []string, err error) {
 
 func getFile(file string, required bool) (files []string, err error) {
 	// Expand glob expression
-	expanded, _ := filepath.Glob(file)
+	expanded, err := filepath.Glob(file)
+	if err != nil {
+		return
+	}
 	if len(expanded) > 0 && expanded[0] != file {
 		for _, path := range expanded {
 			if globFiles, err := getFile(path, required); err != nil {
