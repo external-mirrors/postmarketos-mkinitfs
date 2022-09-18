@@ -151,25 +151,26 @@ func exists(file string) bool {
 func getHookFiles(filesdir string) (files []string, err error) {
 	fileInfo, err := os.ReadDir(filesdir)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getHookFiles: unable to read hook file dir: %w", err)
 	}
 	for _, file := range fileInfo {
 		path := filepath.Join(filesdir, file.Name())
 		f, err := os.Open(path)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("getHookFiles: unable to open hook file: %w", err)
+
 		}
 		defer f.Close()
 		s := bufio.NewScanner(f)
 		for s.Scan() {
 			if filelist, err := getFiles([]string{s.Text()}, true); err != nil {
-				return nil, fmt.Errorf("unable to find file %q required by %q", s.Text(), path)
+				return nil, fmt.Errorf("getHookFiles: unable to find file %q required by %q", s.Text(), path)
 			} else {
 				files = append(files, filelist...)
 			}
 		}
 		if err := s.Err(); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("getHookFiles: uname to process hook file %q: %w", path, err)
 		}
 	}
 	return files, nil
