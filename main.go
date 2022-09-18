@@ -161,6 +161,7 @@ func getHookFiles(filesdir string) (files []string, err error) {
 
 		}
 		defer f.Close()
+		log.Printf("-- Including files from: %s\n", path)
 		s := bufio.NewScanner(f)
 		for s.Scan() {
 			if filelist, err := getFiles([]string{s.Text()}, true); err != nil {
