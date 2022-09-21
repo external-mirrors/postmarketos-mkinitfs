@@ -5,7 +5,7 @@ package archive
 
 import (
 	"bytes"
-	"compress/flate"
+	"compress/gzip"
 	"fmt"
 	"io"
 	"log"
@@ -17,7 +17,6 @@ import (
 	"syscall"
 
 	"github.com/cavaliercoder/go-cpio"
-	"github.com/klauspost/pgzip"
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/filelist"
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/osutil"
 )
@@ -222,10 +221,7 @@ func (archive *Archive) writeCompressed(path string, mode os.FileMode) error {
 		return err
 	}
 
-	gz, err := pgzip.NewWriterLevel(fd, flate.BestSpeed)
-	if err != nil {
-		return err
-	}
+	gz := gzip.NewWriter(fd)
 
 	if _, err = io.Copy(gz, archive.buf); err != nil {
 		return err
