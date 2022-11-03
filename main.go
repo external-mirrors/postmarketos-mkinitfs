@@ -487,7 +487,7 @@ func getInitfsFiles(devinfo deviceinfo.DeviceInfo) (files []string, err error) {
 		"/bin/sh",
 		"/bin/busybox-extras",
 		"/usr/sbin/telnetd",
-		"/sbin/kpartx",
+		"/usr/sbin/kpartx",
 		"/etc/deviceinfo",
 		"/usr/bin/unudhcpd",
 	}
