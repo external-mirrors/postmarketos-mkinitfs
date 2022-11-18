@@ -17,6 +17,7 @@ import (
 	"syscall"
 
 	"github.com/cavaliercoder/go-cpio"
+	"github.com/klauspost/compress/zstd"
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/filelist"
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/osutil"
 )
@@ -25,6 +26,7 @@ type CompressFormat string
 
 const (
 	FormatGzip CompressFormat = "gzip"
+	FormatZstd CompressFormat = "zstd"
 )
 
 type Archive struct {
@@ -233,6 +235,11 @@ func (archive *Archive) writeCompressed(path string, mode os.FileMode) error {
 	switch archive.compress_format {
 	case FormatGzip:
 		compressor = gzip.NewWriter(fd)
+	case FormatZstd:
+		compressor, err = zstd.NewWriter(fd)
+		if err != nil {
+			return err
+		}
 	default:
 		log.Print("Unknown or no compression format set, using gzip")
 		compressor = gzip.NewWriter(fd)
