@@ -91,7 +91,7 @@ func main() {
 	log.Print("Generating for kernel version: ", kernVer)
 	log.Print("Output directory: ", *outDir)
 
-	if err := generateArchive("initramfs", workDir, []filelist.FileLister{
+	if err := generateArchive("initramfs", devinfo.InitfsCompression, workDir, []filelist.FileLister{
 		hookdirs.New("/usr/share/mkinitfs/dirs"),
 		hookdirs.New("/etc/mkinitfs/dirs"),
 		hookfiles.New("/usr/share/mkinitfs/files"),
@@ -107,7 +107,7 @@ func main() {
 		return
 	}
 
-	if err := generateArchive("initramfs-extra", workDir, []filelist.FileLister{
+	if err := generateArchive("initramfs-extra", devinfo.InitfsCompression, workDir, []filelist.FileLister{
 		hookfiles.New("/usr/share/mkinitfs/files-extra"),
 		hookfiles.New("/etc/mkinitfs/files-extra"),
 		hookscripts.New("/usr/share/mkinitfs/hooks-extra"),
@@ -141,10 +141,10 @@ func bootDeploy(workDir, outDir, ubootBoardname string) error {
 	return bd.Run()
 }
 
-func generateArchive(name string, path string, features []filelist.FileLister) error {
+func generateArchive(name string, compressionFormat string, path string, features []filelist.FileLister) error {
 	log.Printf("== Generating %s ==\n", name)
 	defer misc.TimeFunc(time.Now(), name)
-	a, err := archive.New()
+	a, err := archive.New(archive.CompressFormat(compressionFormat))
 	if err != nil {
 		return err
 	}

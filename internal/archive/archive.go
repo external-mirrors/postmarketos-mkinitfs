@@ -28,16 +28,18 @@ const (
 )
 
 type Archive struct {
-	items      archiveItems
-	cpioWriter *cpio.Writer
-	buf        *bytes.Buffer
+	items           archiveItems
+	cpioWriter      *cpio.Writer
+	buf             *bytes.Buffer
+	compress_format CompressFormat
 }
 
-func New() (*Archive, error) {
+func New(format CompressFormat) (*Archive, error) {
 	buf := new(bytes.Buffer)
 	archive := &Archive{
-		cpioWriter: cpio.NewWriter(buf),
-		buf:        buf,
+		cpioWriter:      cpio.NewWriter(buf),
+		buf:             buf,
+		compress_format: format,
 	}
 
 	return archive, nil
