@@ -223,19 +223,26 @@ func (archive *Archive) addFile(source string, dest string) error {
 }
 
 func (archive *Archive) writeCompressed(path string, mode os.FileMode) error {
-	// TODO: support other compression formats, based on deviceinfo
 	fd, err := os.Create(path)
 	if err != nil {
 		return err
 	}
 
-	gz := gzip.NewWriter(fd)
+	var compressor io.WriteCloser
 
-	if _, err = io.Copy(gz, archive.buf); err != nil {
+	switch archive.compress_format {
+	case FormatGzip:
+		compressor = gzip.NewWriter(fd)
+	default:
+		log.Print("Unknown or no compression format set, using gzip")
+		compressor = gzip.NewWriter(fd)
+	}
+
+	if _, err = io.Copy(compressor, archive.buf); err != nil {
 		return err
 	}
 
-	if err := gz.Close(); err != nil {
+	if err := compressor.Close(); err != nil {
 		return err
 	}
 
