@@ -21,6 +21,12 @@ import (
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/osutil"
 )
 
+type CompressFormat string
+
+const (
+	FormatGzip CompressFormat = "gzip"
+)
+
 type Archive struct {
 	items      archiveItems
 	cpioWriter *cpio.Writer
