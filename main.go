@@ -436,11 +436,16 @@ func getFdeFiles(devinfo deviceinfo.DeviceInfo) (files []string, err error) {
 	return
 }
 
-func getHookScripts() (files []string) {
-	scripts, _ := filepath.Glob("/etc/postmarketos-mkinitfs/hooks/*.sh")
-	files = append(files, scripts...)
-
-	return
+func getHookScripts(scriptsdir string) (files []string, err error) {
+	fileInfo, err := os.ReadDir(scriptsdir)
+	if err != nil {
+		return nil, fmt.Errorf("getHookScripts: unable to read hook script dir: %w", err)
+	}
+	for _, file := range fileInfo {
+		path := filepath.Join(scriptsdir, file.Name())
+		files = append(files, path)
+	}
+	return files, nil
 }
 
 func getInitfsExtraFiles(devinfo deviceinfo.DeviceInfo) (files []string, err error) {
@@ -473,6 +478,15 @@ func getInitfsExtraFiles(devinfo deviceinfo.DeviceInfo) (files []string, err err
 			return nil, err
 		} else {
 			files = append(files, filelist...)
+		}
+	}
+
+	if exists("/etc/postmarketos-mkinitfs/hooks-extra") {
+		log.Println("- Including extra hook scripts")
+		if hookScripts, err := getHookScripts("/etc/postmarketos-mkinitfs/hooks-extra"); err != nil {
+			return nil, err
+		} else {
+			files = append(files, hookScripts...)
 		}
 	}
 
@@ -516,9 +530,14 @@ func getInitfsFiles(devinfo deviceinfo.DeviceInfo) (files []string, err error) {
 		}
 	}
 
-	log.Println("- Including hook scripts")
-	hookScripts := getHookScripts()
-	files = append(files, hookScripts...)
+	if exists("/etc/postmarketos-mkinitfs/hooks") {
+		log.Println("- Including hook scripts")
+		if hookScripts, err := getHookScripts("/etc/postmarketos-mkinitfs/hooks"); err != nil {
+			return nil, err
+		} else {
+			files = append(files, hookScripts...)
+		}
+	}
 
 	log.Println("- Including required binaries")
 	if filelist, err := getFiles(requiredFiles, true); err != nil {
