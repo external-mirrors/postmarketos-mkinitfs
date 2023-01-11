@@ -165,7 +165,7 @@ func getHookFiles(filesdir string) (files []string, err error) {
 		s := bufio.NewScanner(f)
 		for s.Scan() {
 			if filelist, err := getFiles([]string{s.Text()}, true); err != nil {
-				return nil, fmt.Errorf("getHookFiles: unable to find file %q required by %q", s.Text(), path)
+				return nil, fmt.Errorf("getHookFiles: unable to add file %q required by %q: %w", s.Text(), path, err)
 			} else {
 				files = append(files, filelist...)
 			}
