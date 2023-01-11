@@ -218,20 +218,30 @@ func getBinaryDeps(file string) (files []string, err error) {
 		return files, err
 	}
 
-	libdirs := []string{"/usr/lib", "/lib"}
+	// we don't recursively search these paths for performance reasons
+	libdirGlobs := []string{
+		"/usr/lib",
+		"/lib",
+		"/usr/lib/expect*",
+	}
+
 	for _, lib := range libs {
 		found := false
-		for _, libdir := range libdirs {
-			path := filepath.Join(libdir, lib)
-			if _, err := os.Stat(path); err == nil {
-				binaryDepFiles, err := getBinaryDeps(path)
-				if err != nil {
-					return files, err
+	findDepLoop:
+		for _, libdirGlob := range libdirGlobs {
+			libdirs, _ := filepath.Glob(libdirGlob)
+			for _, libdir := range libdirs {
+				path := filepath.Join(libdir, lib)
+				if _, err := os.Stat(path); err == nil {
+					binaryDepFiles, err := getBinaryDeps(path)
+					if err != nil {
+						return files, err
+					}
+					files = append(files, binaryDepFiles...)
+					files = append(files, path)
+					found = true
+					break findDepLoop
 				}
-				files = append(files, binaryDepFiles...)
-				files = append(files, path)
-				found = true
-				break
 			}
 		}
 		if !found {
