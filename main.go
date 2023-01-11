@@ -275,7 +275,7 @@ func getFile(file string, required bool) (files []string, err error) {
 	fileInfo, err := os.Stat(file)
 	if err != nil {
 		if required {
-			return files, errors.New("getFile: File does not exist :" + file)
+			return files, fmt.Errorf("getFile: failed to stat file %q: %w", file, err)
 		}
 		return files, nil
 	}
