@@ -18,9 +18,9 @@ import (
 	"strings"
 	"time"
 
-	"gitlab.com/postmarketOS/postmarketos-mkinitfs/pkgs/archive"
+	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/archive"
+	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/misc"
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/pkgs/deviceinfo"
-	"gitlab.com/postmarketOS/postmarketos-mkinitfs/pkgs/misc"
 )
 
 func timeFunc(start time.Time, name string) {

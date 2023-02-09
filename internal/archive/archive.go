@@ -18,7 +18,7 @@ import (
 
 	"github.com/cavaliercoder/go-cpio"
 	"github.com/klauspost/pgzip"
-	"gitlab.com/postmarketOS/postmarketos-mkinitfs/pkgs/misc"
+	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/misc"
 )
 
 type Archive struct {
