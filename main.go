@@ -177,45 +177,20 @@ func getHookFiles(filesdir string) (files []string, err error) {
 	return files, nil
 }
 
-// Recursively list all dependencies for a given ELF binary
-func getBinaryDeps(file string) (files []string, err error) {
-	// if file is a symlink, resolve dependencies for target
-	fileStat, err := os.Lstat(file)
-	if err != nil {
-		return nil, fmt.Errorf("getBinaryDeps: failed to stat file %q: %w", file, err)
-	}
 
-	// Symlink: write symlink to archive then set 'file' to link target
-	if fileStat.Mode()&os.ModeSymlink != 0 {
-		target, err := os.Readlink(file)
-		if err != nil {
-			return nil, fmt.Errorf("getBinaryDeps: unable to read symlink %q: %w", file, err)
-		}
-		if !filepath.IsAbs(target) {
-			target, err = misc.RelativeSymlinkTargetToDir(target, filepath.Dir(file))
-			if err != nil {
-				return files, err
-			}
-		}
-		binaryDepFiles, err := getBinaryDeps(target)
-		if err != nil {
-			return files, err
-		}
-		files = append(files, binaryDepFiles...)
-		return files, err
-	}
+func getDeps(file string) (files []string, err error) {
 
 	// get dependencies for binaries
 	fd, err := elf.Open(file)
 	if err != nil {
-		return nil, fmt.Errorf("getBinaryDeps: unable to open elf binary %q: %w", file, err)
+		return nil, fmt.Errorf("getDeps: unable to open elf binary %q: %w", file, err)
 	}
 	libs, _ := fd.ImportedLibraries()
 	fd.Close()
 	files = append(files, file)
 
 	if len(libs) == 0 {
-		return files, err
+		return
 	}
 
 	// we don't recursively search these paths for performance reasons
@@ -233,9 +208,9 @@ func getBinaryDeps(file string) (files []string, err error) {
 			for _, libdir := range libdirs {
 				path := filepath.Join(libdir, lib)
 				if _, err := os.Stat(path); err == nil {
-					binaryDepFiles, err := getBinaryDeps(path)
+					binaryDepFiles, err := getDeps(path)
 					if err != nil {
-						return files, err
+						return nil, err
 					}
 					files = append(files, binaryDepFiles...)
 					files = append(files, path)
@@ -245,11 +220,38 @@ func getBinaryDeps(file string) (files []string, err error) {
 			}
 		}
 		if !found {
-			return nil, fmt.Errorf("getBinaryDeps: unable to locate dependency for %q: %s", file, lib)
+			return nil, fmt.Errorf("getDeps: unable to locate dependency for %q: %s", file, lib)
 		}
 	}
 
 	return
+}
+
+// Recursively list all dependencies for a given ELF binary
+func getBinaryDeps(file string) ([]string, error) {
+	// if file is a symlink, resolve dependencies for target
+	fileStat, err := os.Lstat(file)
+	if err != nil {
+		return nil, fmt.Errorf("getBinaryDeps: failed to stat file %q: %w", file, err)
+	}
+
+	// Symlink: write symlink to archive then set 'file' to link target
+	if fileStat.Mode()&os.ModeSymlink != 0 {
+		target, err := os.Readlink(file)
+		if err != nil {
+			return nil, fmt.Errorf("getBinaryDeps: unable to read symlink %q: %w", file, err)
+		}
+		if !filepath.IsAbs(target) {
+			target, err = misc.RelativeSymlinkTargetToDir(target, filepath.Dir(file))
+			if err != nil {
+				return nil, err
+			}
+		}
+		file = target
+	}
+
+	return getDeps(file, make(map[string]struct{}))
+
 }
 
 func getFiles(list []string, required bool) (files []string, err error) {
