@@ -177,8 +177,11 @@ func getHookFiles(filesdir string) (files []string, err error) {
 	return files, nil
 }
 
+func getDeps(file string, parents map[string]struct{}) (files []string, err error) {
 
-func getDeps(file string) (files []string, err error) {
+	if _, found := parents[file]; found {
+		return
+	}
 
 	// get dependencies for binaries
 	fd, err := elf.Open(file)
@@ -188,6 +191,7 @@ func getDeps(file string) (files []string, err error) {
 	libs, _ := fd.ImportedLibraries()
 	fd.Close()
 	files = append(files, file)
+	parents[file] = struct{}{}
 
 	if len(libs) == 0 {
 		return
@@ -208,7 +212,7 @@ func getDeps(file string) (files []string, err error) {
 			for _, libdir := range libdirs {
 				path := filepath.Join(libdir, lib)
 				if _, err := os.Stat(path); err == nil {
-					binaryDepFiles, err := getDeps(path)
+					binaryDepFiles, err := getDeps(path, parents)
 					if err != nil {
 						return nil, err
 					}
