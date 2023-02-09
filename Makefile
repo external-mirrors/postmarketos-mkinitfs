@@ -13,10 +13,10 @@ GOTEST=go test -count=1 -race
 GOSRC!=find * -name '*.go'
 GOSRC+=go.mod go.sum
 
-all: postmarketos-mkinitfs
+all: mkinitfs
 
-postmarketos-mkinitfs: $(GOSRC)
-	$(GO) build $(GOFLAGS) -ldflags "$(LDFLAGS)" -o postmarketos-mkinitfs
+mkinitfs: $(GOSRC)
+	$(GO) build $(GOFLAGS) -ldflags "$(LDFLAGS)" -o mkinitfs ./cmd/mkinitfs
 
 .PHONY: fmt
 fmt:
@@ -33,21 +33,18 @@ test:
 	@$(GOTEST) ./...
 
 clean:
-	$(RM) postmarketos-mkinitfs 
+	$(RM) mkinitfs 
 
-install: $(DOCS) postmarketos-mkinitfs
-	install -Dm755 postmarketos-mkinitfs -t $(DESTDIR)$(BINDIR)/
-	ln -sf postmarketos-mkinitfs $(DESTDIR)$(BINDIR)/mkinitfs
+install: $(DOCS) mkinitfs
+	install -Dm755 mkinitfs -t $(DESTDIR)$(BINDIR)/
 
 .PHONY: checkinstall
 checkinstall:
-	test -e $(DESTDIR)$(BINDIR)/postmarketos-mkinitfs
-	test -L $(DESTDIR)$(BINDIR)/mkinitfs
+	test -e $(DESTDIR)$(BINDIR)/mkinitfs
 
 RMDIR_IF_EMPTY:=sh -c '! [ -d $$0 ] || ls -1qA $$0 | grep -q . || rmdir $$0'
 
 uninstall:
-	$(RM) $(DESTDIR)$(BINDIR)/postmarketos-mkinitfs
 	$(RM) $(DESTDIR)$(BINDIR)/mkinitfs
 	${RMDIR_IF_EMPTY} $(DESTDIR)$(BINDIR)
 
