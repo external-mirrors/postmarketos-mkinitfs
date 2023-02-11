@@ -4,10 +4,12 @@
 package misc
 
 import (
-	"golang.org/x/sys/unix"
 	"log"
 	"os"
 	"path/filepath"
+	"time"
+
+	"golang.org/x/sys/unix"
 )
 
 // Converts a relative symlink target path (e.g. ../../lib/foo.so), that is
@@ -73,4 +75,14 @@ func RemoveDuplicates(in []string) (out []string) {
 	}
 
 	return
+}
+
+// Prints the execution time of a function, not meant to be very
+// sensitive/accurate, but good enough to gauge rough run times.
+// Meant to be called as:
+//
+//	defer misc.TimeFunc(time.Now(), "foo")
+func TimeFunc(start time.Time, name string) {
+	elapsed := time.Since(start)
+	log.Printf("%s completed in: %s", name, elapsed)
 }

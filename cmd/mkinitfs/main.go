@@ -23,11 +23,6 @@ import (
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/pkgs/deviceinfo"
 )
 
-func timeFunc(start time.Time, name string) {
-	elapsed := time.Since(start)
-	log.Printf("%s completed in: %s", name, elapsed)
-}
-
 func main() {
 	deviceinfoFile := "/etc/deviceinfo"
 	if !exists(deviceinfoFile) {
@@ -45,7 +40,7 @@ func main() {
 	outDir := flag.String("d", "/boot", "Directory to output initfs(-extra) and other boot files")
 	flag.Parse()
 
-	defer timeFunc(time.Now(), "mkinitfs")
+	defer misc.TimeFunc(time.Now(), "mkinitfs")
 
 	kernVer, err := getKernelVersion()
 	if err != nil {
