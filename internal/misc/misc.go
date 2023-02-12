@@ -114,3 +114,11 @@ func GetKernelVersion() (string, error) {
 
 	return strings.TrimSpace(string(contents)), nil
 }
+
+// Exists tests if the given file/dir exists or not
+func Exists(file string) bool {
+	if _, err := os.Stat(file); err == nil {
+		return true
+	}
+	return false
+}
