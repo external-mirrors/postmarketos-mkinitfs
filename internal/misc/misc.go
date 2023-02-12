@@ -4,9 +4,11 @@
 package misc
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"golang.org/x/sys/unix"
@@ -85,4 +87,30 @@ func RemoveDuplicates(in []string) (out []string) {
 func TimeFunc(start time.Time, name string) {
 	elapsed := time.Since(start)
 	log.Printf("%s completed in: %s", name, elapsed)
+}
+
+func getKernelReleaseFile() (string, error) {
+	files, _ := filepath.Glob("/usr/share/kernel/*/kernel.release")
+	// only one kernel flavor supported
+	if len(files) != 1 {
+		return "", fmt.Errorf("only one kernel release/flavor is supported, found: %q", files)
+	}
+
+	return files[0], nil
+}
+
+func GetKernelVersion() (string, error) {
+	var version string
+
+	releaseFile, err := getKernelReleaseFile()
+	if err != nil {
+		return version, err
+	}
+
+	contents, err := os.ReadFile(releaseFile)
+	if err != nil {
+		return version, err
+	}
+
+	return strings.TrimSpace(string(contents)), nil
 }
