@@ -25,7 +25,7 @@ import (
 
 func main() {
 	deviceinfoFile := "/etc/deviceinfo"
-	if !exists(deviceinfoFile) {
+	if !misc.Exists(deviceinfoFile) {
 		log.Print("NOTE: deviceinfo (from device package) not installed yet, " +
 			"not building the initramfs now (it should get built later " +
 			"automatically.)")
@@ -122,7 +122,7 @@ func bootDeploy(workDir string, outDir string) error {
 		"-d", workDir,
 		"-o", outDir,
 		"initramfs-extra")
-	if !exists(cmd.Path) {
+	if !misc.Exists(cmd.Path) {
 		return errors.New("boot-deploy command not found")
 	}
 
@@ -134,13 +134,6 @@ func bootDeploy(workDir string, outDir string) error {
 	}
 
 	return nil
-}
-
-func exists(file string) bool {
-	if _, err := os.Stat(file); err == nil {
-		return true
-	}
-	return false
 }
 
 func getHookFiles(filesdir string) (files []string, err error) {
@@ -468,7 +461,7 @@ func getInitfsExtraFiles(devinfo deviceinfo.DeviceInfo) (files []string, err err
 	}
 
 	// Hook files & scripts
-	if exists("/etc/postmarketos-mkinitfs/files-extra") {
+	if misc.Exists("/etc/postmarketos-mkinitfs/files-extra") {
 		log.Println("- Including hook files")
 		var hookFiles []string
 		hookFiles, err := getHookFiles("/etc/postmarketos-mkinitfs/files-extra")
@@ -482,7 +475,7 @@ func getInitfsExtraFiles(devinfo deviceinfo.DeviceInfo) (files []string, err err
 		}
 	}
 
-	if exists("/etc/postmarketos-mkinitfs/hooks-extra") {
+	if misc.Exists("/etc/postmarketos-mkinitfs/hooks-extra") {
 		log.Println("- Including extra hook scripts")
 		if hookScripts, err := getHookScripts("/etc/postmarketos-mkinitfs/hooks-extra"); err != nil {
 			return nil, err
@@ -491,7 +484,7 @@ func getInitfsExtraFiles(devinfo deviceinfo.DeviceInfo) (files []string, err err
 		}
 	}
 
-	if exists("/usr/bin/osk-sdl") {
+	if misc.Exists("/usr/bin/osk-sdl") {
 		log.Println("- Including FDE support")
 		if fdeFiles, err := getFdeFiles(devinfo); err != nil {
 			return nil, err
@@ -518,7 +511,7 @@ func getInitfsFiles(devinfo deviceinfo.DeviceInfo) (files []string, err error) {
 	}
 
 	// Hook files & scripts
-	if exists("/etc/postmarketos-mkinitfs/files") {
+	if misc.Exists("/etc/postmarketos-mkinitfs/files") {
 		log.Println("- Including hook files")
 		if hookFiles, err := getHookFiles("/etc/postmarketos-mkinitfs/files"); err != nil {
 			return nil, err
@@ -531,7 +524,7 @@ func getInitfsFiles(devinfo deviceinfo.DeviceInfo) (files []string, err error) {
 		}
 	}
 
-	if exists("/etc/postmarketos-mkinitfs/hooks") {
+	if misc.Exists("/etc/postmarketos-mkinitfs/hooks") {
 		log.Println("- Including hook scripts")
 		if hookScripts, err := getHookScripts("/etc/postmarketos-mkinitfs/hooks"); err != nil {
 			return nil, err
@@ -554,7 +547,7 @@ func getInitfsModules(devinfo deviceinfo.DeviceInfo, kernelVer string) (files []
 	log.Println("- Including kernel modules")
 
 	modDir := filepath.Join("/lib/modules", kernelVer)
-	if !exists(modDir) {
+	if !misc.Exists(modDir) {
 		// dir /lib/modules/<kernel> if kernel built without module support, so just print a message
 		log.Printf("-- kernel module directory not found: %q, not including modules", modDir)
 		return
@@ -827,7 +820,7 @@ func getModulesInDir(modPath string) (files []string, err error) {
 func getModule(modName string, modDir string) (files []string, err error) {
 
 	modDep := filepath.Join(modDir, "modules.dep")
-	if !exists(modDep) {
+	if !misc.Exists(modDep) {
 		return nil, fmt.Errorf("kernel module.dep not found: %s", modDir)
 	}
 
@@ -844,7 +837,7 @@ func getModule(modName string, modDir string) (files []string, err error) {
 
 	for _, dep := range deps {
 		p := filepath.Join(modDir, dep)
-		if !exists(p) {
+		if !misc.Exists(p) {
 			return nil, fmt.Errorf("tried to include a module that doesn't exist in the modules directory (%s): %s", modDir, p)
 		}
 		files = append(files, p)
