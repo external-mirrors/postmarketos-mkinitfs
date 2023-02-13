@@ -130,7 +130,7 @@ func getOskConfFontPath(oskConfPath string) (string, error) {
 		}
 	}
 	if !misc.Exists(path) {
-		return path, errors.New("Unable to find font: " + path)
+		return path, fmt.Errorf("unable to find font: %s", path)
 	}
 
 	return path, nil
