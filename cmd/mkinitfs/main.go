@@ -138,21 +138,6 @@ func bootDeploy(workDir string, outDir string) error {
 
 func getInitfsExtraFiles(devinfo deviceinfo.DeviceInfo) (files []string, err error) {
 	log.Println("== Generating initramfs extra ==")
-	binariesExtra := []string{
-		"/lib/libz.so.1",
-		"/sbin/btrfs",
-		"/sbin/dmsetup",
-		"/sbin/e2fsck",
-		"/usr/sbin/parted",
-		"/usr/sbin/resize2fs",
-		"/usr/sbin/resize.f2fs",
-	}
-	log.Println("- Including extra binaries")
-	if filelist, err := misc.GetFiles(binariesExtra, true); err != nil {
-		return nil, err
-	} else {
-		files = append(files, filelist...)
-	}
 
 	// Hook files & scripts
 	if misc.Exists("/etc/postmarketos-mkinitfs/files-extra") {
@@ -190,15 +175,6 @@ func getInitfsExtraFiles(devinfo deviceinfo.DeviceInfo) (files []string, err err
 
 func getInitfsFiles(devinfo deviceinfo.DeviceInfo) (files []string, err error) {
 	log.Println("== Generating initramfs ==")
-	requiredFiles := []string{
-		"/bin/busybox",
-		"/bin/sh",
-		"/bin/busybox-extras",
-		"/usr/sbin/telnetd",
-		"/usr/sbin/kpartx",
-		"/etc/deviceinfo",
-		"/usr/bin/unudhcpd",
-	}
 
 	// Hook files & scripts
 	if misc.Exists("/etc/postmarketos-mkinitfs/files") {
@@ -221,13 +197,6 @@ func getInitfsFiles(devinfo deviceinfo.DeviceInfo) (files []string, err error) {
 		} else {
 			files = append(files, list...)
 		}
-	}
-
-	log.Println("- Including required binaries")
-	if filelist, err := misc.GetFiles(requiredFiles, true); err != nil {
-		return nil, err
-	} else {
-		files = append(files, filelist...)
 	}
 
 	return
