@@ -155,7 +155,7 @@ func getHookFiles(filesdir string) (files []string, err error) {
 		log.Printf("-- Including files from: %s\n", path)
 		s := bufio.NewScanner(f)
 		for s.Scan() {
-			if filelist, err := getFiles([]string{s.Text()}, true); err != nil {
+			if filelist, err := misc.GetFiles([]string{s.Text()}, true); err != nil {
 				return nil, fmt.Errorf("getHookFiles: unable to add file %q required by %q: %w", s.Text(), path, err)
 			} else {
 				files = append(files, filelist...)
@@ -347,7 +347,7 @@ func getInitfsExtraFiles(devinfo deviceinfo.DeviceInfo) (files []string, err err
 		"/usr/sbin/resize.f2fs",
 	}
 	log.Println("- Including extra binaries")
-	if filelist, err := getFiles(binariesExtra, true); err != nil {
+	if filelist, err := misc.GetFiles(binariesExtra, true); err != nil {
 		return nil, err
 	} else {
 		files = append(files, filelist...)
@@ -423,7 +423,7 @@ func getInitfsFiles(devinfo deviceinfo.DeviceInfo) (files []string, err error) {
 	}
 
 	log.Println("- Including required binaries")
-	if filelist, err := getFiles(requiredFiles, true); err != nil {
+	if filelist, err := misc.GetFiles(requiredFiles, true); err != nil {
 		return nil, err
 	} else {
 		files = append(files, filelist...)
