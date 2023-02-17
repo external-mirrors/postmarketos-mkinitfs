@@ -167,18 +167,6 @@ func getHookFiles(filesdir string) (files []string, err error) {
 	return files, nil
 }
 
-func getHookScripts(scriptsdir string) (files []string, err error) {
-	fileInfo, err := os.ReadDir(scriptsdir)
-	if err != nil {
-		return nil, fmt.Errorf("getHookScripts: unable to read hook script dir: %w", err)
-	}
-	for _, file := range fileInfo {
-		path := filepath.Join(scriptsdir, file.Name())
-		files = append(files, path)
-	}
-	return files, nil
-}
-
 func getInitfsExtraFiles(devinfo deviceinfo.DeviceInfo) (files []string, err error) {
 	log.Println("== Generating initramfs extra ==")
 	binariesExtra := []string{
