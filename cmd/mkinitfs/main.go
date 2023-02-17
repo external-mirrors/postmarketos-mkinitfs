@@ -45,7 +45,7 @@ func main() {
 
 	defer misc.TimeFunc(time.Now(), "mkinitfs")
 
-	kernVer, err := getKernelVersion()
+	kernVer, err := misc.GetKernelVersion()
 	if err != nil {
 		log.Fatal(err)
 	}
