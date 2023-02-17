@@ -18,9 +18,10 @@ import (
 	"time"
 
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/archive"
-	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/filelist/osksdl"
+	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/filelist/hookfiles"
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/filelist/hookscripts"
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/filelist/modules"
+	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/filelist/osksdl"
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/misc"
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/pkgs/deviceinfo"
 )
@@ -355,15 +356,12 @@ func getInitfsExtraFiles(devinfo deviceinfo.DeviceInfo) (files []string, err err
 	// Hook files & scripts
 	if misc.Exists("/etc/postmarketos-mkinitfs/files-extra") {
 		log.Println("- Including hook files")
-		var hookFiles []string
-		hookFiles, err := getHookFiles("/etc/postmarketos-mkinitfs/files-extra")
-		if err != nil {
-			return nil, err
-		}
-		if filelist, err := getFiles(hookFiles, true); err != nil {
+		hookFiles := hookfiles.New("/etc/postmarketos-mkinitfs/files-extra")
+
+		if list, err := hookFiles.List(); err != nil {
 			return nil, err
 		} else {
-			files = append(files, filelist...)
+			files = append(files, list...)
 		}
 	}
 
@@ -404,14 +402,12 @@ func getInitfsFiles(devinfo deviceinfo.DeviceInfo) (files []string, err error) {
 	// Hook files & scripts
 	if misc.Exists("/etc/postmarketos-mkinitfs/files") {
 		log.Println("- Including hook files")
-		if hookFiles, err := getHookFiles("/etc/postmarketos-mkinitfs/files"); err != nil {
+		hookFiles := hookfiles.New("/etc/postmarketos-mkinitfs/files")
+
+		if list, err := hookFiles.List(); err != nil {
 			return nil, err
 		} else {
-			if filelist, err := getFiles(hookFiles, true); err != nil {
-				return nil, err
-			} else {
-				files = append(files, filelist...)
-			}
+			files = append(files, list...)
 		}
 	}
 
