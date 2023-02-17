@@ -432,32 +432,6 @@ func getInitfsFiles(devinfo deviceinfo.DeviceInfo) (files []string, err error) {
 	return
 }
 
-func getKernelReleaseFile() (string, error) {
-	files, _ := filepath.Glob("/usr/share/kernel/*/kernel.release")
-	// only one kernel flavor supported
-	if len(files) != 1 {
-		return "", fmt.Errorf("only one kernel release/flavor is supported, found: %q", files)
-	}
-
-	return files[0], nil
-}
-
-func getKernelVersion() (string, error) {
-	var version string
-
-	releaseFile, err := getKernelReleaseFile()
-	if err != nil {
-		return version, err
-	}
-
-	contents, err := os.ReadFile(releaseFile)
-	if err != nil {
-		return version, err
-	}
-
-	return strings.TrimSpace(string(contents)), nil
-}
-
 func Copy(srcFile, dstFile string) error {
 	out, err := os.Create(dstFile)
 	if err != nil {
