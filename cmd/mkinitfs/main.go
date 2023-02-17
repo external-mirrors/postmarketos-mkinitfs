@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/archive"
+	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/filelist/osksdl"
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/misc"
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/pkgs/deviceinfo"
 )
@@ -484,15 +485,12 @@ func getInitfsExtraFiles(devinfo deviceinfo.DeviceInfo) (files []string, err err
 		}
 	}
 
-	if misc.Exists("/usr/bin/osk-sdl") {
-		log.Println("- Including FDE support")
-		if fdeFiles, err := getFdeFiles(devinfo); err != nil {
-			return nil, err
-		} else {
-			files = append(files, fdeFiles...)
-		}
-	} else {
-		log.Println("- *NOT* including FDE support")
+	osksdlFiles := osksdl.New(devinfo.MesaDriver)
+	if filelist, err := osksdlFiles.List(); err != nil {
+		return nil, err
+	} else if len(filelist) > 0 {
+		log.Println("- Including osk-sdl support")
+		files = append(files, filelist...)
 	}
 
 	return
