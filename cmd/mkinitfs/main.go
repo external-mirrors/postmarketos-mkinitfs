@@ -286,16 +286,6 @@ func generateInitfs(name string, path string, kernVer string, devinfo deviceinfo
 		return err
 	}
 
-	// splash images
-	log.Println("- Including splash images")
-	splashFiles, _ := filepath.Glob("/usr/share/postmarketos-splashes/*.ppm.gz")
-	for _, file := range splashFiles {
-		// splash images are expected at /<file>
-		if err := initfsArchive.AddItem(file, filepath.Join("/", filepath.Base(file))); err != nil {
-			return err
-		}
-	}
-
 	// initfs_functions
 	if err := initfsArchive.AddItem("/usr/share/postmarketos-mkinitfs/init_functions.sh", "/init_functions.sh"); err != nil {
 		return err
