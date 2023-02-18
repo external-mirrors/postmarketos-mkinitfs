@@ -37,6 +37,14 @@ func (f *FileList) Get(src string) (string, bool) {
 	return dest, found
 }
 
+// Import copies in the contents of src. If a source path already exists when
+// importing, then the destination path is updated with the new value.
+func (f *FileList) Import(src *FileList) {
+	for i := range src.IterItems() {
+		f.Add(i.Source, i.Dest)
+	}
+}
+
 // iterate through the list and and send each one as a new File over the
 // returned channel
 func (f *FileList) IterItems() <-chan File {
