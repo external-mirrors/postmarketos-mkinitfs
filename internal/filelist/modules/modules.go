@@ -53,8 +53,8 @@ func (m *Modules) List() ([]string, error) {
 		}
 	}
 
-	// /etc/postmarketos-mkinitfs/modules/*.modules
-	initfsModFiles, _ := filepath.Glob("/etc/postmarketos-mkinitfs/modules/*.modules")
+	// /*/mkinitfs/modules/*.modules
+	initfsModFiles, _ := filepath.Glob("/etc/mkinitfs/modules/*.modules")
 	for _, modFile := range initfsModFiles {
 		f, err := os.Open(modFile)
 		if err != nil {
