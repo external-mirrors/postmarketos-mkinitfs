@@ -252,16 +252,6 @@ func generateInitfs(name string, path string, kernVer string, devinfo deviceinfo
 		return err
 	}
 
-	requiredDirs := []string{
-		"/bin", "/sbin", "/usr/bin", "/usr/sbin", "/proc", "/sys",
-		"/dev", "/tmp", "/lib", "/boot", "/sysroot", "/etc",
-	}
-	for _, dir := range requiredDirs {
-		if err := initfsArchive.AddItem(dir, dir); err != nil {
-			return err
-		}
-	}
-
 	if files, err := getInitfsFiles(devinfo); err != nil {
 		return err
 	} else {
