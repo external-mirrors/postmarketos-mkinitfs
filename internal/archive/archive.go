@@ -18,6 +18,7 @@ import (
 
 	"github.com/cavaliercoder/go-cpio"
 	"github.com/klauspost/pgzip"
+	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/filelist"
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/misc"
 )
 
@@ -119,9 +120,13 @@ func (archive *Archive) Write(path string, mode os.FileMode) error {
 
 // Adds the given items in the map to the archive. The map format is {source path:dest path}.
 // Internally this just calls AddItem on each key,value pair in the map.
-func (archive *Archive) AddItems(paths map[string]string) error {
-	for s, d := range paths {
-		if err := archive.AddItem(s, d); err != nil {
+func (archive *Archive) AddItems(f filelist.FileLister) error {
+	list, err := f.List()
+	if err != nil {
+		return err
+	}
+	for i := range list.IterItems() {
+		if err := archive.AddItem(i.Source, i.Dest); err != nil {
 			return err
 		}
 	}
