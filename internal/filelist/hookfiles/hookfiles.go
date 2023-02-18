@@ -3,9 +3,11 @@ package hookfiles
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/filelist"
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/misc"
@@ -39,19 +41,41 @@ func (h *HookFiles) List() (*filelist.FileList, error) {
 		}
 		defer f.Close()
 		log.Printf("-- Including files from: %s\n", path)
-		s := bufio.NewScanner(f)
-		for s.Scan() {
-			if fFiles, err := misc.GetFiles([]string{s.Text()}, true); err != nil {
-				return nil, fmt.Errorf("getHookFiles: unable to add file %q required by %q: %w", s.Text(), path, err)
-			} else {
-				for _, file := range fFiles {
-					files.Add(file, file)
-				}
-			}
-		}
-		if err := s.Err(); err != nil {
-			return nil, fmt.Errorf("getHookFiles: uname to process hook file %q: %w", path, err)
+
+		if list, err := slurpFiles(f); err != nil {
+			return nil, fmt.Errorf("hookfiles: unable to process hook file %q: %w", path, err)
+		} else {
+			files.Import(list)
 		}
 	}
 	return files, nil
+}
+
+func slurpFiles(fd io.Reader) (*filelist.FileList, error) {
+	files := filelist.NewFileList()
+
+	s := bufio.NewScanner(fd)
+	for s.Scan() {
+		src, dest, has_dest := strings.Cut(s.Text(), ":")
+
+		fFiles, err := misc.GetFiles([]string{src}, true)
+		if err != nil {
+			return nil, fmt.Errorf("unable to add %q: %w", src, err)
+		}
+		// loop over all returned files from GetFile
+		for _, file := range fFiles {
+			if !has_dest {
+				files.Add(file, file)
+			} else if len(fFiles) > 1 {
+				// Don't support specifying dest if src was a glob
+				// NOTE: this could support this later...
+				files.Add(file, file)
+			} else {
+				// dest path specified, and only 1 file
+				files.Add(file, dest)
+			}
+		}
+	}
+
+	return files, s.Err()
 }
