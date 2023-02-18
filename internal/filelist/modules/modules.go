@@ -15,14 +15,16 @@ import (
 )
 
 type Modules struct {
-	modules []string
+	modulesList     []string
+	modulesListPath string
 }
 
-// New returns a new HookScripts that will use the given path to provide a list
+// New returns a new Modules that will use the given moduleto provide a list
 // of script files.
-func New(modules []string) *Modules {
+func New(modulesList []string, modulesListPath string) *Modules {
 	return &Modules{
-		modules: modules,
+		modulesList:     modulesList,
+		modulesListPath: modulesListPath,
 	}
 }
 
@@ -49,8 +51,8 @@ func (m *Modules) List() (*filelist.FileList, error) {
 		files.Add(file, file)
 	}
 
-	// deviceinfo modules
-	for _, module := range m.modules {
+	// slurp up given list of modules
+	for _, module := range m.modulesList {
 		if modFilelist, err := getModule(module, modDir); err != nil {
 			return nil, fmt.Errorf("getInitfsModules: unable to get modules from deviceinfo: %w", err)
 		} else {
@@ -60,27 +62,64 @@ func (m *Modules) List() (*filelist.FileList, error) {
 		}
 	}
 
-	// /*/mkinitfs/modules/*.modules
-	initfsModFiles, _ := filepath.Glob("/etc/mkinitfs/modules/*.modules")
-	for _, modFile := range initfsModFiles {
-		f, err := os.Open(modFile)
+	// slurp up modules from lists in modulesListPath
+	fileInfo, err := os.ReadDir(m.modulesListPath)
+	if err != nil {
+		log.Println("-- Unable to find dir, skipping...")
+		return files, nil
+	}
+	for _, file := range fileInfo {
+		path := filepath.Join(m.modulesListPath, file.Name())
+		f, err := os.Open(path)
 		if err != nil {
-			return nil, fmt.Errorf("getInitfsModules: unable to open mkinitfs modules file %q: %w", modFile, err)
+			return nil, fmt.Errorf("unable to open module list file %q: %w", path, err)
 		}
 		defer f.Close()
-		s := bufio.NewScanner(f)
-		for s.Scan() {
+		log.Printf("-- Including modules from: %s\n", path)
+
+		if list, err := slurpModules(f, modDir); err != nil {
+			return nil, fmt.Errorf("unable to process module list file %q: %w", path, err)
+		} else {
+			files.Import(list)
+		}
+	}
+	return files, nil
+}
+
+func slurpModules(fd io.Reader, modDir string) (*filelist.FileList, error) {
+	files := filelist.NewFileList()
+	s := bufio.NewScanner(fd)
+	for s.Scan() {
+		line := s.Text()
+		dir, file := filepath.Split(line)
+		if file == "" {
+			// item is a directory
+			dir = filepath.Join(modDir, dir)
+			dirs, _ := filepath.Glob(dir)
+			for _, d := range dirs {
+				if modFilelist, err := getModulesInDir(d); err != nil {
+					return nil, fmt.Errorf("unable to get modules dir %q: %w", d, err)
+				} else {
+					for _, file := range modFilelist {
+						files.Add(file, file)
+					}
+				}
+			}
+		} else if dir == "" {
+			// item is a module name
 			if modFilelist, err := getModule(s.Text(), modDir); err != nil {
-				return nil, fmt.Errorf("getInitfsModules: unable to get module file %q: %w", s.Text(), err)
+				return nil, fmt.Errorf("unable to get module file %q: %w", s.Text(), err)
 			} else {
 				for _, file := range modFilelist {
 					files.Add(file, file)
 				}
 			}
+		} else {
+			log.Printf("Unknown module entry: %q", line)
 		}
 	}
 
-	return files, nil
+	return files, s.Err()
 }
 
 func getModulesInDir(modPath string) (files []string, err error) {

@@ -65,7 +65,7 @@ func main() {
 		hookfiles.New("/etc/mkinitfs/files"),
 		hookscripts.New("/usr/share/mkinitfs/hooks"),
 		hookscripts.New("/etc/mkinitfs/hooks"),
-		modules.New(strings.Fields(devinfo.ModulesInitfs)),
+		modules.New(strings.Fields(devinfo.ModulesInitfs), "/usr/share/mkinitfs/modules"),
 	}); err != nil {
 		log.Fatalf("failed to generate %q: %s\n", "initramfs", err)
 	}
