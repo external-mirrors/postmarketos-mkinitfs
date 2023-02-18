@@ -26,12 +26,14 @@ func New(filePath string) *HookFiles {
 }
 
 func (h *HookFiles) List() (*filelist.FileList, error) {
-	log.Println("- Including files")
+	log.Printf("- Including file lists from %s", h.filePath)
+
+	files := filelist.NewFileList()
 	fileInfo, err := os.ReadDir(h.filePath)
 	if err != nil {
-		return nil, fmt.Errorf("getHookFiles: unable to read hook file dir: %w", err)
+		log.Println("-- Unable to find dir, skipping...")
+		return files, nil
 	}
-	files := filelist.NewFileList()
 	for _, file := range fileInfo {
 		path := filepath.Join(h.filePath, file.Name())
 		f, err := os.Open(path)
