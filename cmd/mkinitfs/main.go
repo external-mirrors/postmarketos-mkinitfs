@@ -140,9 +140,9 @@ func getInitfsExtraFiles(devinfo deviceinfo.DeviceInfo) (files []string, err err
 	log.Println("== Generating initramfs extra ==")
 
 	// Hook files & scripts
-	if misc.Exists("/etc/postmarketos-mkinitfs/files-extra") {
+	if misc.Exists("/etc/mkinitfs/files-extra") {
 		log.Println("- Including hook files")
-		hookFiles := hookfiles.New("/etc/postmarketos-mkinitfs/files-extra")
+		hookFiles := hookfiles.New("/etc/mkinitfs/files-extra")
 
 		if list, err := hookFiles.List(); err != nil {
 			return nil, err
@@ -151,9 +151,9 @@ func getInitfsExtraFiles(devinfo deviceinfo.DeviceInfo) (files []string, err err
 		}
 	}
 
-	if misc.Exists("/etc/postmarketos-mkinitfs/hooks-extra") {
+	if misc.Exists("/etc/mkinitfs/hooks-extra") {
 		log.Println("- Including extra hook scripts")
-		hookScripts := hookscripts.New("/etc/postmarketos-mkinitfs/hooks-extra")
+		hookScripts := hookscripts.New("/etc/mkinitfs/hooks-extra")
 
 		if list, err := hookScripts.List(); err != nil {
 			return nil, err
@@ -173,11 +173,11 @@ func getInitfsExtraFiles(devinfo deviceinfo.DeviceInfo) (files []string, err err
 	return
 }
 
-func getInitfsFiles(devinfo deviceinfo.DeviceInfo) (files []string, err error) {
+func getInitfsFiles(devinfo deviceinfo.DeviceInfo, files misc.Items) (err error) {
 	log.Println("== Generating initramfs ==")
 
 	// Hook files & scripts
-	if misc.Exists("/etc/postmarketos-mkinitfs/files") {
+	if misc.Exists("/etc/mkinitfs/files") {
 		log.Println("- Including hook files")
 		hookFiles := hookfiles.New("/etc/postmarketos-mkinitfs/files")
 
@@ -188,9 +188,9 @@ func getInitfsFiles(devinfo deviceinfo.DeviceInfo) (files []string, err error) {
 		}
 	}
 
-	if misc.Exists("/etc/postmarketos-mkinitfs/hooks") {
+	if misc.Exists("/etc/mkinitfs/hooks") {
 		log.Println("- Including hook scripts")
-		hookScripts := hookscripts.New("/etc/postmarketos-mkinitfs/hooks")
+		hookScripts := hookscripts.New("/etc/mkinitfs/hooks")
 
 		if list, err := hookScripts.List(); err != nil {
 			return nil, err
@@ -287,7 +287,7 @@ func generateInitfs(name string, path string, kernVer string, devinfo deviceinfo
 	}
 
 	// initfs_functions
-	if err := initfsArchive.AddItem("/usr/share/postmarketos-mkinitfs/init_functions.sh", "/init_functions.sh"); err != nil {
+	if err := initfsArchive.AddItem("/usr/share/mkinitfs/init_functions.sh", "/init_functions.sh"); err != nil {
 		return err
 	}
 

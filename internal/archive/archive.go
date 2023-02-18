@@ -49,7 +49,7 @@ type archiveItems struct {
 
 // Adds the given item to the archiveItems, only if it doesn't already exist in
 // the list. The items are kept sorted in ascending order.
-func (a *archiveItems) Add(item archiveItem) {
+func (a *archiveItems) add(item archiveItem) {
 	a.Lock()
 	defer a.Unlock()
 
@@ -170,7 +170,7 @@ func (archive *Archive) addFile(source string, dest string) error {
 
 		destFilename := strings.TrimPrefix(dest, "/")
 
-		archive.items.Add(archiveItem{
+		archive.items.add(archiveItem{
 			sourcePath: source,
 			header: &cpio.Header{
 				Name:     destFilename,
@@ -200,7 +200,7 @@ func (archive *Archive) addFile(source string, dest string) error {
 
 	destFilename := strings.TrimPrefix(dest, "/")
 
-	archive.items.Add(archiveItem{
+	archive.items.add(archiveItem{
 		sourcePath: source,
 		header: &cpio.Header{
 			Name: destFilename,
@@ -295,7 +295,7 @@ func (archive *Archive) addDir(dir string) error {
 	subdirs := strings.Split(strings.TrimPrefix(dir, "/"), "/")
 	for i, subdir := range subdirs {
 		path := filepath.Join(strings.Join(subdirs[:i], "/"), subdir)
-		archive.items.Add(archiveItem{
+		archive.items.add(archiveItem{
 			sourcePath: path,
 			header: &cpio.Header{
 				Name: path,

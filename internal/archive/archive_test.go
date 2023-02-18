@@ -180,7 +180,7 @@ func TestArchiveItemsAdd(t *testing.T) {
 	for _, st := range subtests {
 		t.Run(st.name, func(t *testing.T) {
 			a := archiveItems{items: st.inItems}
-			a.Add(st.inItem)
+			a.add(st.inItem)
 			if !reflect.DeepEqual(st.expected, a.items) {
 				t.Fatal("expected:", st.expected, " got: ", a.items)
 			}
