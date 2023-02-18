@@ -15,8 +15,10 @@ import (
 	"time"
 
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/archive"
+	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/filelist"
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/filelist/hookfiles"
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/filelist/hookscripts"
+	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/filelist/initramfs"
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/filelist/modules"
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/filelist/osksdl"
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/misc"
@@ -57,12 +59,26 @@ func main() {
 	log.Print("Generating for kernel version: ", kernVer)
 	log.Print("Output directory: ", *outDir)
 
-	if err := generateInitfs("initramfs", workDir, kernVer, devinfo); err != nil {
-		log.Fatal("generateInitfs: ", err)
+	log.Println("== Generating initramfs ==")
+	if err := generateArchive("initramfs", workDir, []filelist.FileLister{
+		hookfiles.New("/usr/share/mkinitfs/files"),
+		hookfiles.New("/etc/mkinitfs/files"),
+		hookscripts.New("/usr/share/mkinitfs/hooks"),
+		hookscripts.New("/etc/mkinitfs/hooks"),
+		modules.New(strings.Fields(devinfo.ModulesInitfs)),
+	}); err != nil {
+		log.Fatalf("failed to generate %q: %s\n", "initramfs", err)
 	}
 
-	if err := generateInitfsExtra("initramfs-extra", workDir, devinfo); err != nil {
-		log.Fatal("generateInitfsExtra: ", err)
+	log.Println("== Generating initramfs-extra ==")
+	if err := generateArchive("initramfs-extra", workDir, []filelist.FileLister{
+		hookfiles.New("/usr/share/mkinitfs/files-extra"),
+		hookfiles.New("/etc/mkinitfs/files-extra"),
+		hookscripts.New("/usr/share/mkinitfs/hooks-extra"),
+		hookscripts.New("/etc/mkinitfs/hooks-extra"),
+		osksdl.New(devinfo.MesaDriver),
+	}); err != nil {
+		log.Fatalf("failed to generate %q: %s\n", "initramfs-extra", err)
 	}
 
 	if err := copyUbootFiles(workDir, devinfo); errors.Is(err, os.ErrNotExist) {
@@ -136,43 +152,6 @@ func bootDeploy(workDir string, outDir string) error {
 	return nil
 }
 
-func getInitfsExtraFiles(devinfo deviceinfo.DeviceInfo) (files []string, err error) {
-	log.Println("== Generating initramfs extra ==")
-
-	// Hook files & scripts
-	if misc.Exists("/etc/mkinitfs/files-extra") {
-		log.Println("- Including hook files")
-		hookFiles := hookfiles.New("/etc/mkinitfs/files-extra")
-
-		if list, err := hookFiles.List(); err != nil {
-			return nil, err
-		} else {
-			files = append(files, list...)
-		}
-	}
-
-	if misc.Exists("/etc/mkinitfs/hooks-extra") {
-		log.Println("- Including extra hook scripts")
-		hookScripts := hookscripts.New("/etc/mkinitfs/hooks-extra")
-
-		if list, err := hookScripts.List(); err != nil {
-			return nil, err
-		} else {
-			files = append(files, list...)
-		}
-	}
-
-	osksdlFiles := osksdl.New(devinfo.MesaDriver)
-	if filelist, err := osksdlFiles.List(); err != nil {
-		return nil, err
-	} else if len(filelist) > 0 {
-		log.Println("- Including osk-sdl support")
-		files = append(files, filelist...)
-	}
-
-	return
-}
-
 func Copy(srcFile, dstFile string) error {
 	out, err := os.Create(dstFile)
 	if err != nil {
@@ -217,103 +196,19 @@ func copyUbootFiles(path string, devinfo deviceinfo.DeviceInfo) error {
 	return nil
 }
 
-func generateInitfs(name string, path string, kernVer string, devinfo deviceinfo.DeviceInfo) error {
-	initfsArchive, err := archive.New()
+func generateArchive(name string, path string, features []filelist.FileLister) error {
+	a, err := archive.New()
 	if err != nil {
 		return err
 	}
 
-	log.Println("== Generating initramfs ==")
-
-	files := []string{}
-	// Hook files & scripts
-	if misc.Exists("/etc/mkinitfs/files") {
-		log.Println("- Including hook files")
-		hookFiles := hookfiles.New("/etc/mkinitfs/files")
-		if list, err := hookFiles.List(); err != nil {
-			return err
-		} else {
-			files = append(files, list...)
-		}
-	}
-
-	if misc.Exists("/etc/mkinitfs/hooks") {
-		log.Println("- Including hook scripts")
-		hookScripts := hookscripts.New("/etc/mkinitfs/hooks")
-
-		if list, err := hookScripts.List(); err != nil {
-			return err
-		} else {
-			files = append(files, list...)
-		}
-	}
-
-	items := make(map[string]string)
-	// copy files into a map, where the source(key) and dest(value) are the
-	// same
-	for _, f := range files {
-		items[f] = f
-	}
-	if err := initfsArchive.AddItems(items); err != nil {
+	fs := initramfs.New(features)
+	if err := a.AddItems(fs); err != nil {
 		return err
 	}
 
-	log.Println("- Including kernel modules")
-	modules := modules.New(strings.Fields(devinfo.ModulesInitfs))
-	if list, err := modules.List(); err != nil {
-		return err
-	} else {
-		items := make(map[string]string)
-		// copy files into a map, where the source(key) and dest(value) are the
-		// same
-		for _, f := range list {
-			items[f] = f
-		}
-		if err := initfsArchive.AddItems(items); err != nil {
-			return err
-		}
-	}
-
-	if err := initfsArchive.AddItem("/usr/share/postmarketos-mkinitfs/init.sh", "/init"); err != nil {
-		return err
-	}
-
-	// initfs_functions
-	if err := initfsArchive.AddItem("/usr/share/mkinitfs/init_functions.sh", "/init_functions.sh"); err != nil {
-		return err
-	}
-
-	log.Println("- Writing and verifying initramfs archive")
-	if err := initfsArchive.Write(filepath.Join(path, name), os.FileMode(0644)); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func generateInitfsExtra(name string, path string, devinfo deviceinfo.DeviceInfo) error {
-	initfsExtraArchive, err := archive.New()
-	if err != nil {
-		return err
-	}
-
-	if files, err := getInitfsExtraFiles(devinfo); err != nil {
-		return err
-	} else {
-
-		items := make(map[string]string)
-		// copy files into a map, where the source(key) and dest(value) are the
-		// same
-		for _, f := range files {
-			items[f] = f
-		}
-		if err := initfsExtraArchive.AddItems(items); err != nil {
-			return err
-		}
-	}
-
-	log.Println("- Writing and verifying initramfs-extra archive")
-	if err := initfsExtraArchive.Write(filepath.Join(path, name), os.FileMode(0644)); err != nil {
+	log.Println("- Writing and verifying archive: ", name)
+	if err := a.Write(filepath.Join(path, name), os.FileMode(0644)); err != nil {
 		return err
 	}
 
