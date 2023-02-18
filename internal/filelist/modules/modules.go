@@ -26,6 +26,8 @@ func New(modules []string) *Modules {
 }
 
 func (m *Modules) List() ([]string, error) {
+	log.Println("- Including kernel modules")
+
 	kernVer, err := misc.GetKernelVersion()
 	if err != nil {
 		return nil, err

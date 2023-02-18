@@ -23,6 +23,7 @@ func New(filePath string) *HookFiles {
 }
 
 func (h *HookFiles) List() ([]string, error) {
+	log.Println("- Including files")
 	fileInfo, err := os.ReadDir(h.filePath)
 	if err != nil {
 		return nil, fmt.Errorf("getHookFiles: unable to read hook file dir: %w", err)

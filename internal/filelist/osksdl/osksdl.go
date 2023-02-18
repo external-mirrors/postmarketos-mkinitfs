@@ -3,6 +3,7 @@ package osksdl
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -28,6 +29,7 @@ func (s *OskSdl) List() ([]string, error) {
 	if !misc.Exists("/usr/bin/osk-sdl") {
 		return nil, nil
 	}
+	log.Println("- Including osk-sdl support")
 
 	confFiles := []string{
 		"/etc/osk.conf",
