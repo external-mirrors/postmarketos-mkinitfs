@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"strings"
 
+	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/filelist"
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/misc"
 )
 
@@ -25,7 +26,7 @@ func New(modules []string) *Modules {
 	}
 }
 
-func (m *Modules) List() ([]string, error) {
+func (m *Modules) List() (*filelist.FileList, error) {
 	log.Println("- Including kernel modules")
 
 	kernVer, err := misc.GetKernelVersion()
@@ -33,7 +34,7 @@ func (m *Modules) List() ([]string, error) {
 		return nil, err
 	}
 
-	files := []string{}
+	files := filelist.NewFileList()
 
 	modDir := filepath.Join("/lib/modules", kernVer)
 	if !misc.Exists(modDir) {
@@ -44,14 +45,18 @@ func (m *Modules) List() ([]string, error) {
 
 	// modules.* required by modprobe
 	modprobeFiles, _ := filepath.Glob(filepath.Join(modDir, "modules.*"))
-	files = append(files, modprobeFiles...)
+	for _, file := range modprobeFiles {
+		files.Add(file, file)
+	}
 
 	// deviceinfo modules
 	for _, module := range m.modules {
-		if filelist, err := getModule(module, modDir); err != nil {
+		if modFilelist, err := getModule(module, modDir); err != nil {
 			return nil, fmt.Errorf("getInitfsModules: unable to get modules from deviceinfo: %w", err)
 		} else {
-			files = append(files, filelist...)
+			for _, file := range modFilelist {
+				files.Add(file, file)
+			}
 		}
 	}
 
@@ -65,10 +70,12 @@ func (m *Modules) List() ([]string, error) {
 		defer f.Close()
 		s := bufio.NewScanner(f)
 		for s.Scan() {
-			if filelist, err := getModule(s.Text(), modDir); err != nil {
+			if modFilelist, err := getModule(s.Text(), modDir); err != nil {
 				return nil, fmt.Errorf("getInitfsModules: unable to get module file %q: %w", s.Text(), err)
 			} else {
-				files = append(files, filelist...)
+				for _, file := range modFilelist {
+					files.Add(file, file)
+				}
 			}
 		}
 	}

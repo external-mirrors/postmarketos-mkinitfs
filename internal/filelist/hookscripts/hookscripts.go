@@ -5,6 +5,8 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+
+	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/filelist"
 )
 
 type HookScripts struct {
@@ -19,8 +21,8 @@ func New(scriptsDir string) *HookScripts {
 	}
 }
 
-func (h *HookScripts) List() ([]string, error) {
-	files := []string{}
+func (h *HookScripts) List() (*filelist.FileList, error) {
+	files := filelist.NewFileList()
 	log.Println("- Including hook scripts")
 
 	fileInfo, err := os.ReadDir(h.scriptsDir)
@@ -29,7 +31,7 @@ func (h *HookScripts) List() ([]string, error) {
 	}
 	for _, file := range fileInfo {
 		path := filepath.Join(h.scriptsDir, file.Name())
-		files = append(files, path)
+		files.Add(path, path)
 	}
 	return files, nil
 }

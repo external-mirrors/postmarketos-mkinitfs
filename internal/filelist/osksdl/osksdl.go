@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/filelist"
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/misc"
 )
 
@@ -25,11 +26,13 @@ func New(mesaDriverName string) *OskSdl {
 
 // Get a list of files and their dependencies related to supporting rootfs full
 // disk (d)encryption
-func (s *OskSdl) List() ([]string, error) {
+func (s *OskSdl) List() (*filelist.FileList, error) {
 	if !misc.Exists("/usr/bin/osk-sdl") {
 		return nil, nil
 	}
 	log.Println("- Including osk-sdl support")
+
+	files := filelist.NewFileList()
 
 	confFiles := []string{
 		"/etc/osk.conf",
@@ -38,9 +41,12 @@ func (s *OskSdl) List() ([]string, error) {
 		"/etc/fb.modes",
 		"/etc/directfbrc",
 	}
-	files, err := misc.GetFiles(confFiles, false)
+	confFileList, err := misc.GetFiles(confFiles, false)
 	if err != nil {
 		return nil, fmt.Errorf("getFdeFiles: failed to add files: %w", err)
+	}
+	for _, file := range confFileList {
+		files.Add(file, file)
 	}
 
 	// osk-sdl
@@ -49,17 +55,19 @@ func (s *OskSdl) List() ([]string, error) {
 		"/sbin/cryptsetup",
 		"/usr/lib/libGL.so.1",
 	}
-	if filelist, err := misc.GetFiles(oskFiles, true); err != nil {
+	if oskFileList, err := misc.GetFiles(oskFiles, true); err != nil {
 		return nil, fmt.Errorf("getFdeFiles: failed to add files: %w", err)
 	} else {
-		files = append(files, filelist...)
+		for _, file := range oskFileList {
+			files.Add(file, file)
+		}
 	}
 
 	fontFile, err := getOskConfFontPath("/etc/osk.conf")
 	if err != nil {
 		return nil, fmt.Errorf("getFdeFiles: failed to add file %q: %w", fontFile, err)
 	}
-	files = append(files, fontFile)
+	files.Add(fontFile, fontFile)
 
 	// Directfb
 	dfbFiles := []string{}
@@ -72,10 +80,12 @@ func (s *OskSdl) List() ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("getFdeFiles: failed to add file %w", err)
 	}
-	if filelist, err := misc.GetFiles(dfbFiles, true); err != nil {
+	if dfbFileList, err := misc.GetFiles(dfbFiles, true); err != nil {
 		return nil, fmt.Errorf("getFdeFiles: failed to add files: %w", err)
 	} else {
-		files = append(files, filelist...)
+		for _, file := range dfbFileList {
+			files.Add(file, file)
+		}
 	}
 
 	// tslib
@@ -91,10 +101,12 @@ func (s *OskSdl) List() ([]string, error) {
 	}
 	libts, _ := filepath.Glob("/usr/lib/libts*")
 	tslibFiles = append(tslibFiles, libts...)
-	if filelist, err := misc.GetFiles(tslibFiles, true); err != nil {
+	if tslibFileList, err := misc.GetFiles(tslibFiles, true); err != nil {
 		return nil, fmt.Errorf("getFdeFiles: failed to add files: %w", err)
 	} else {
-		files = append(files, filelist...)
+		for _, file := range tslibFileList {
+			files.Add(file, file)
+		}
 	}
 
 	// mesa hw accel
@@ -106,10 +118,12 @@ func (s *OskSdl) List() ([]string, error) {
 			"/usr/lib/libudev.so.1",
 			"/usr/lib/xorg/modules/dri/" + s.mesaDriver + "_dri.so",
 		}
-		if filelist, err := misc.GetFiles(mesaFiles, true); err != nil {
+		if mesaFileList, err := misc.GetFiles(mesaFiles, true); err != nil {
 			return nil, fmt.Errorf("getFdeFiles: failed to add files: %w", err)
 		} else {
-			files = append(files, filelist...)
+			for _, file := range mesaFileList {
+				files.Add(file, file)
+			}
 		}
 	}
 
