@@ -173,35 +173,6 @@ func getInitfsExtraFiles(devinfo deviceinfo.DeviceInfo) (files []string, err err
 	return
 }
 
-func getInitfsFiles(devinfo deviceinfo.DeviceInfo, files misc.Items) (err error) {
-	log.Println("== Generating initramfs ==")
-
-	// Hook files & scripts
-	if misc.Exists("/etc/mkinitfs/files") {
-		log.Println("- Including hook files")
-		hookFiles := hookfiles.New("/etc/postmarketos-mkinitfs/files")
-
-		if list, err := hookFiles.List(); err != nil {
-			return nil, err
-		} else {
-			files = append(files, list...)
-		}
-	}
-
-	if misc.Exists("/etc/mkinitfs/hooks") {
-		log.Println("- Including hook scripts")
-		hookScripts := hookscripts.New("/etc/mkinitfs/hooks")
-
-		if list, err := hookScripts.List(); err != nil {
-			return nil, err
-		} else {
-			files = append(files, list...)
-		}
-	}
-
-	return
-}
-
 func Copy(srcFile, dstFile string) error {
 	out, err := os.Create(dstFile)
 	if err != nil {
@@ -252,18 +223,39 @@ func generateInitfs(name string, path string, kernVer string, devinfo deviceinfo
 		return err
 	}
 
-	if files, err := getInitfsFiles(devinfo); err != nil {
-		return err
-	} else {
-		items := make(map[string]string)
-		// copy files into a map, where the source(key) and dest(value) are the
-		// same
-		for _, f := range files {
-			items[f] = f
-		}
-		if err := initfsArchive.AddItems(items); err != nil {
+	log.Println("== Generating initramfs ==")
+
+	files := []string{}
+	// Hook files & scripts
+	if misc.Exists("/etc/mkinitfs/files") {
+		log.Println("- Including hook files")
+		hookFiles := hookfiles.New("/etc/mkinitfs/files")
+		if list, err := hookFiles.List(); err != nil {
 			return err
+		} else {
+			files = append(files, list...)
 		}
+	}
+
+	if misc.Exists("/etc/mkinitfs/hooks") {
+		log.Println("- Including hook scripts")
+		hookScripts := hookscripts.New("/etc/mkinitfs/hooks")
+
+		if list, err := hookScripts.List(); err != nil {
+			return err
+		} else {
+			files = append(files, list...)
+		}
+	}
+
+	items := make(map[string]string)
+	// copy files into a map, where the source(key) and dest(value) are the
+	// same
+	for _, f := range files {
+		items[f] = f
+	}
+	if err := initfsArchive.AddItems(items); err != nil {
+		return err
 	}
 
 	log.Println("- Including kernel modules")
