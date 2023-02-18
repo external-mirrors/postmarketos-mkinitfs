@@ -44,40 +44,6 @@ func (m *Modules) List() ([]string, error) {
 	modprobeFiles, _ := filepath.Glob(filepath.Join(modDir, "modules.*"))
 	files = append(files, modprobeFiles...)
 
-	// module name (without extension), or directory (trailing slash is important! globs OK)
-	requiredModules := []string{
-		"loop",
-		"dm-crypt",
-		"kernel/fs/overlayfs/",
-		"kernel/crypto/",
-		"kernel/arch/*/crypto/",
-	}
-
-	for _, item := range requiredModules {
-		dir, file := filepath.Split(item)
-		if file == "" {
-			// item is a directory
-			dir = filepath.Join(modDir, dir)
-			dirs, _ := filepath.Glob(dir)
-			for _, d := range dirs {
-				if filelist, err := getModulesInDir(d); err != nil {
-					return nil, fmt.Errorf("getInitfsModules: unable to get modules dir %q: %w", d, err)
-				} else {
-					files = append(files, filelist...)
-				}
-			}
-		} else if dir == "" {
-			// item is a module name
-			if filelist, err := getModule(file, modDir); err != nil {
-				return nil, fmt.Errorf("getInitfsModules: unable to get module %q: %w", file, err)
-			} else {
-				files = append(files, filelist...)
-			}
-		} else {
-			log.Printf("Unknown module entry: %q", item)
-		}
-	}
-
 	// deviceinfo modules
 	for _, module := range m.modules {
 		if filelist, err := getModule(module, modDir); err != nil {
