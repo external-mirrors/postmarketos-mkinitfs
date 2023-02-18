@@ -27,12 +27,12 @@ func New(mesaDriverName string) *OskSdl {
 // Get a list of files and their dependencies related to supporting rootfs full
 // disk (d)encryption
 func (s *OskSdl) List() (*filelist.FileList, error) {
-	if !misc.Exists("/usr/bin/osk-sdl") {
-		return nil, nil
-	}
-	log.Println("- Including osk-sdl support")
-
 	files := filelist.NewFileList()
+	if !misc.Exists("/usr/bin/osk-sdl") {
+		return files, nil
+	}
+
+	log.Println("- Including osk-sdl support")
 
 	confFiles := []string{
 		"/etc/osk.conf",
