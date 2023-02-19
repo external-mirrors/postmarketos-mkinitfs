@@ -1,8 +1,10 @@
 .POSIX:
-.SUFFIXES:
+.SUFFIXES: .1 .1.scd
 
+VPATH=doc
 PREFIX?=/usr/local
 BINDIR?=$(PREFIX)/sbin
+MANDIR?=$(PREFIX)/share/man
 SHAREDIR?=$(PREFIX)/share
 GO?=go
 GOFLAGS?=
@@ -13,10 +15,18 @@ GOTEST=go test -count=1 -race
 GOSRC!=find * -name '*.go'
 GOSRC+=go.mod go.sum
 
-all: mkinitfs
+DOCS := \
+	mkinitfs.1
+
+all: mkinitfs $(DOCS)
 
 mkinitfs: $(GOSRC)
 	$(GO) build $(GOFLAGS) -ldflags "$(LDFLAGS)" -o mkinitfs ./cmd/mkinitfs
+
+.1.scd.1:
+	scdoc < $< > $@
+
+doc: $(DOCS)
 
 .PHONY: fmt
 fmt:
@@ -33,19 +43,23 @@ test:
 	@$(GOTEST) ./...
 
 clean:
-	$(RM) mkinitfs 
+	$(RM) mkinitfs $(DOCS) 
 
 install: $(DOCS) mkinitfs
 	install -Dm755 mkinitfs -t $(DESTDIR)$(BINDIR)/
+	install -Dm644 mkinitfs.1 -t $(DESTDIR)$(MANDIR)/man1/
 
 .PHONY: checkinstall
 checkinstall:
 	test -e $(DESTDIR)$(BINDIR)/mkinitfs
+	test -e $(DESTDIR)$(MANDIR)/man1/mkinitfs.1
 
 RMDIR_IF_EMPTY:=sh -c '! [ -d $$0 ] || ls -1qA $$0 | grep -q . || rmdir $$0'
 
 uninstall:
 	$(RM) $(DESTDIR)$(BINDIR)/mkinitfs
 	${RMDIR_IF_EMPTY} $(DESTDIR)$(BINDIR)
+	$(RM) $(DESTDIR)$(MANDIR)/man1/mkinitfs.1
+	$(RMDIR_IF_EMPTY) $(DESTDIR)$(MANDIR)/man1
 
 .PHONY: all clean install uninstall test

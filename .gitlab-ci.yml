@@ -28,7 +28,7 @@ build:
   stage: build
   <<: *only-default
   before_script:
-    - apk -q add go staticcheck make
+    - apk -q add go staticcheck make scdoc
   script:
     - make test
     - make
