@@ -16,6 +16,7 @@ import (
 
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/archive"
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/filelist"
+	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/filelist/hookdirs"
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/filelist/hookfiles"
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/filelist/hookscripts"
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/filelist/initramfs"
@@ -61,6 +62,8 @@ func main() {
 
 	log.Println("== Generating initramfs ==")
 	if err := generateArchive("initramfs", workDir, []filelist.FileLister{
+		hookdirs.New("/usr/share/mkinitfs/dirs"),
+		hookdirs.New("/etc/mkinitfs/dirs"),
 		hookfiles.New("/usr/share/mkinitfs/files"),
 		hookfiles.New("/etc/mkinitfs/files"),
 		hookscripts.New("/usr/share/mkinitfs/hooks"),
