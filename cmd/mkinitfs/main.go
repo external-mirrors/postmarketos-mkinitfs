@@ -29,6 +29,8 @@ import (
 var Version string
 
 func main() {
+	retCode := 0
+	defer func() { os.Exit(retCode) }()
 
 	outDir := flag.String("d", "/boot", "Directory to output initfs(-extra) and other boot files")
 	var showVersion bool
@@ -37,7 +39,7 @@ func main() {
 
 	if showVersion {
 		fmt.Printf("%s - %s\n", filepath.Base(os.Args[0]), Version)
-		os.Exit(0)
+		return
 	}
 
 	deviceinfoFile := "/etc/deviceinfo"
@@ -50,28 +52,33 @@ func main() {
 
 	devinfo, err := deviceinfo.ReadDeviceinfo(deviceinfoFile)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		retCode = 1
+		return
 	}
 
 	defer misc.TimeFunc(time.Now(), "mkinitfs")
 
 	kernVer, err := misc.GetKernelVersion()
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		retCode = 1
+		return
 	}
 
 	// temporary working dir
 	workDir, err := os.MkdirTemp("", "mkinitfs")
 	if err != nil {
-		log.Fatal("Unable to create temporary work directory:", err)
+		log.Println(err)
+		log.Println("unable to create temporary work directory")
+		retCode = 1
+		return
 	}
 	defer func() {
 		e := os.RemoveAll(workDir)
 		if e != nil && err == nil {
 			err = e
-		}
-		if err != nil {
-			log.Fatal(err)
+			retCode = 1
 		}
 	}()
 
@@ -87,7 +94,10 @@ func main() {
 		hookscripts.New("/etc/mkinitfs/hooks"),
 		modules.New(strings.Fields(devinfo.ModulesInitfs), "/usr/share/mkinitfs/modules"),
 	}); err != nil {
-		log.Fatalf("failed to generate %q: %s\n", "initramfs", err)
+		log.Println(err)
+		log.Println("failed to generate: ", "initramfs")
+		retCode = 1
+		return
 	}
 
 	if err := generateArchive("initramfs-extra", workDir, []filelist.FileLister{
@@ -97,12 +107,18 @@ func main() {
 		hookscripts.New("/etc/mkinitfs/hooks-extra"),
 		osksdl.New(devinfo.MesaDriver),
 	}); err != nil {
-		log.Fatalf("failed to generate %q: %s\n", "initramfs-extra", err)
+		log.Println(err)
+		log.Println("failed to generate: ", "initramfs-extra")
+		retCode = 1
+		return
 	}
 
 	// Final processing of initramfs / kernel is done by boot-deploy
 	if err := bootDeploy(workDir, *outDir, devinfo.UbootBoardname); err != nil {
-		log.Fatal("bootDeploy: ", err)
+		log.Println(err)
+		log.Println("bootDeploy failed")
+		retCode = 1
+		return
 	}
 
 }
