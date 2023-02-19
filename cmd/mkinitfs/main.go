@@ -6,6 +6,7 @@ package main
 import (
 	"errors"
 	"flag"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -26,7 +27,21 @@ import (
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/pkgs/deviceinfo"
 )
 
+// set at build time
+var Version string
+
 func main() {
+
+	outDir := flag.String("d", "/boot", "Directory to output initfs(-extra) and other boot files")
+	var showVersion bool
+	flag.BoolVar(&showVersion, "version", false, "Print version and quit.")
+	flag.Parse()
+
+	if showVersion {
+		fmt.Printf("%s - %s\n", filepath.Base(os.Args[0]), Version)
+		os.Exit(0)
+	}
+
 	deviceinfoFile := "/etc/deviceinfo"
 	if !misc.Exists(deviceinfoFile) {
 		log.Print("NOTE: deviceinfo (from device package) not installed yet, " +
@@ -39,9 +54,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	outDir := flag.String("d", "/boot", "Directory to output initfs(-extra) and other boot files")
-	flag.Parse()
 
 	defer misc.TimeFunc(time.Now(), "mkinitfs")
 

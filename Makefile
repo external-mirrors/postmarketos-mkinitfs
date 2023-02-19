@@ -1,6 +1,7 @@
 .POSIX:
 .SUFFIXES: .1 .1.scd
 
+VERSION?=`git describe --tags --dirty 2>/dev/null || echo 0.0.0`
 VPATH=doc
 PREFIX?=/usr/local
 BINDIR?=$(PREFIX)/sbin
@@ -8,7 +9,7 @@ MANDIR?=$(PREFIX)/share/man
 SHAREDIR?=$(PREFIX)/share
 GO?=go
 GOFLAGS?=
-LDFLAGS+=-s -w
+LDFLAGS+=-s -w -X main.Version=$(VERSION)
 RM?=rm -f
 GOTEST=go test -count=1 -race
 
