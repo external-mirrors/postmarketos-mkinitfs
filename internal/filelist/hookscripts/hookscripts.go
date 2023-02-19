@@ -1,7 +1,6 @@
 package hookscripts
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -22,12 +21,14 @@ func New(scriptsDir string) *HookScripts {
 }
 
 func (h *HookScripts) List() (*filelist.FileList, error) {
+	log.Printf("- Including hook scripts from %s", h.scriptsDir)
+
 	files := filelist.NewFileList()
-	log.Println("- Including hook scripts")
 
 	fileInfo, err := os.ReadDir(h.scriptsDir)
 	if err != nil {
-		return nil, fmt.Errorf("getHookScripts: unable to read hook script dir: %w", err)
+		log.Println("-- Unable to find dir, skipping...")
+		return files, nil
 	}
 	for _, file := range fileInfo {
 		path := filepath.Join(h.scriptsDir, file.Name())
