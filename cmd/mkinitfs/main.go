@@ -78,7 +78,6 @@ func main() {
 	log.Print("Generating for kernel version: ", kernVer)
 	log.Print("Output directory: ", *outDir)
 
-	log.Println("== Generating initramfs ==")
 	if err := generateArchive("initramfs", workDir, []filelist.FileLister{
 		hookdirs.New("/usr/share/mkinitfs/dirs"),
 		hookdirs.New("/etc/mkinitfs/dirs"),
@@ -91,7 +90,6 @@ func main() {
 		log.Fatalf("failed to generate %q: %s\n", "initramfs", err)
 	}
 
-	log.Println("== Generating initramfs-extra ==")
 	if err := generateArchive("initramfs-extra", workDir, []filelist.FileLister{
 		hookfiles.New("/usr/share/mkinitfs/files-extra"),
 		hookfiles.New("/etc/mkinitfs/files-extra"),
@@ -117,6 +115,7 @@ func bootDeploy(workDir, outDir, ubootBoardname string) error {
 }
 
 func generateArchive(name string, path string, features []filelist.FileLister) error {
+	log.Printf("== Generating %s ==\n", name)
 	a, err := archive.New()
 	if err != nil {
 		return err
