@@ -101,13 +101,19 @@ func bootDeploy(workDir string, outDir string) error {
 	return nil
 }
 
+// Copy copies the file at srcFile path to a new file at dstFile path
 func copy(srcFile, dstFile string) error {
 	out, err := os.Create(dstFile)
 	if err != nil {
 		return err
 	}
 
-	defer out.Close()
+	defer func() {
+		errClose := out.Close()
+		if err == nil {
+			err = errClose
+		}
+	}()
 
 	in, err := os.Open(srcFile)
 	if err != nil {
