@@ -26,7 +26,19 @@ boot-related items onto the system.
 
 # DEVICEINFO
 
-TODO: where is this specified?
+The canonical deviceinfo "specification" is at
+https://wiki.postmarketos.org/wiki/Deviceinfo_reference
+
+mkinitfs reads deviceinfo values from */etc/deviceinfo*. The following variables
+are *required* by mkinitfs:
+
+	- deviceinfo_initfs_compression
+	- deviceinfo_mesa_driver
+	- deviceinfo_modules_initfs
+	- deviceinfo_uboot_boardname
+
+It is a design goal to keep the number of required variables from deviceinfo to
+a bare minimum, and to require only variables that don't hold lists of things.
 
 # DIRECTORIES
 
