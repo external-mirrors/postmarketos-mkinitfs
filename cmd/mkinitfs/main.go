@@ -67,7 +67,15 @@ func main() {
 	if err != nil {
 		log.Fatal("Unable to create temporary work directory:", err)
 	}
-	defer os.RemoveAll(workDir)
+	defer func() {
+		e := os.RemoveAll(workDir)
+		if e != nil && err == nil {
+			err = e
+		}
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
 
 	log.Print("Generating for kernel version: ", kernVer)
 	log.Print("Output directory: ", *outDir)
