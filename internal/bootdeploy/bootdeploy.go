@@ -129,6 +129,8 @@ func copy(srcFile, dstFile string) error {
 	return nil
 }
 
+// copyUbootFiles uses deviceinfo_uboot_boardname to copy u-boot files required
+// for running boot-deploy
 func copyUbootFiles(path, ubootBoardname string) error {
 	if ubootBoardname == "" {
 		return nil
