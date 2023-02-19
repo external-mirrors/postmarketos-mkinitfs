@@ -109,6 +109,7 @@ func main() {
 
 func bootDeploy(workDir, outDir, ubootBoardname string) error {
 	log.Print("== Using boot-deploy to finalize/install files ==")
+	defer misc.TimeFunc(time.Now(), "boot-deploy")
 
 	bd := bootdeploy.New(workDir, outDir, ubootBoardname)
 	return bd.Run()
