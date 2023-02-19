@@ -14,31 +14,10 @@ import (
 )
 
 type DeviceInfo struct {
-	AppendDtb                     string
-	Arch                          string
-	UbootBoardname                string
-	BootimgAppendSEAndroidEnforce string
-	BootimgBlobpack               string
-	BootimgDtbSecond              string
-	BootimgMtkMkimage             string
-	BootimgPxa                    string
-	BootimgQcdt                   string
-	Dtb                           string
-	FlashKernelOnUpdate           string
-	FlashOffsetBase               string
-	FlashOffsetKernel             string
-	FlashOffsetRamdisk            string
-	FlashOffsetSecond             string
-	FlashOffsetTags               string
-	FlashPagesize                 string
-	GenerateBootimg               string
-	GenerateLegacyUbootInitfs     string
-	InitfsCompression             string
-	KernelCmdline                 string
-	LegacyUbootLoadAddress        string
-	MesaDriver                    string
-	MkinitfsPostprocess           string
-	ModulesInitfs                 string
+	InitfsCompression string
+	MesaDriver        string
+	ModulesInitfs     string
+	UbootBoardname    string
 }
 
 func ReadDeviceinfo(file string) (DeviceInfo, error) {

@@ -43,15 +43,9 @@ func TestUnmarshal(t *testing.T) {
 		{"ModulesInitfs", "deviceinfo_modules_initfs=\"panfrost foo bar bazz\"\n", "panfrost foo bar bazz"},
 		{"ModulesInitfs", "deviceinfo_modules_initfs=\"panfrost foo bar bazz\"", "panfrost foo bar bazz"},
 		// line with multiple '='
-		{"KernelCmdline",
-			"deviceinfo_kernel_cmdline=\"PMOS_NO_OUTPUT_REDIRECT fw_devlink=off nvme_core.default_ps_max_latency_us=5500 pcie_aspm.policy=performance\"\n",
-			"PMOS_NO_OUTPUT_REDIRECT fw_devlink=off nvme_core.default_ps_max_latency_us=5500 pcie_aspm.policy=performance"},
+		{"InitfsCompression", "deviceinfo_initfs_compression=zstd:--foo=1 -T0 --bar=bazz", "zstd:--foo=1 -T0 --bar=bazz"},
 		// empty option
 		{"ModulesInitfs", "deviceinfo_modules_initfs=\"\"\n", ""},
-		{"Dtb", "deviceinfo_dtb=\"freescale/imx8mq-librem5-r2 freescale/imx8mq-librem5-r3 freescale/imx8mq-librem5-r4\"\n",
-			"freescale/imx8mq-librem5-r2 freescale/imx8mq-librem5-r3 freescale/imx8mq-librem5-r4"},
-		// valid deviceinfo line, just not used in this module
-		{"", "deviceinfo_codename=\"pine64-pinebookpro\"", ""},
 		// line with comment at the end
 		{"MesaDriver", "deviceinfo_mesa_driver=\"panfrost\"  # this is a nice driver", "panfrost"},
 		{"", "# this is a comment!\n", ""},
