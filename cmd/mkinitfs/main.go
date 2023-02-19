@@ -117,6 +117,7 @@ func bootDeploy(workDir, outDir, ubootBoardname string) error {
 
 func generateArchive(name string, path string, features []filelist.FileLister) error {
 	log.Printf("== Generating %s ==\n", name)
+	defer misc.TimeFunc(time.Now(), name)
 	a, err := archive.New()
 	if err != nil {
 		return err
