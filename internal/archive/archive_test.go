@@ -187,3 +187,74 @@ func TestArchiveItemsAdd(t *testing.T) {
 		})
 	}
 }
+
+func TestExtractFormatLevel(t *testing.T) {
+	tests := []struct {
+		name           string
+		in             string
+		expectedFormat CompressFormat
+		expectedLevel  CompressLevel
+	}{
+		{
+			name:           "gzip, default level",
+			in:             "gzip:default",
+			expectedFormat: FormatGzip,
+			expectedLevel:  LevelDefault,
+		},
+		{
+			name:           "unknown format, level 12",
+			in:             "pear:12",
+			expectedFormat: FormatGzip,
+			expectedLevel:  LevelDefault,
+		},
+		{
+			name:           "zstd, level not given",
+			in:             "zstd",
+			expectedFormat: FormatZstd,
+			expectedLevel:  LevelDefault,
+		},
+		{
+			name:           "zstd, invalid level 'fast:'",
+			in:             "zstd:fast:",
+			expectedFormat: FormatZstd,
+			expectedLevel:  LevelDefault,
+		},
+		{
+			name:           "zstd, best",
+			in:             "zstd:best",
+			expectedFormat: FormatZstd,
+			expectedLevel:  LevelBest,
+		},
+		{
+			name:           "zstd, level empty :",
+			in:             "zstd:",
+			expectedFormat: FormatZstd,
+			expectedLevel:  LevelDefault,
+		},
+		{
+			name:           "gzip, best",
+			in:             "gzip:best",
+			expectedFormat: FormatGzip,
+			expectedLevel:  LevelBest,
+		},
+		{
+			name:           "none, none",
+			in:             "",
+			expectedFormat: FormatGzip,
+			expectedLevel:  LevelDefault,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			format, level := ExtractFormatLevel(test.in)
+			if format != test.expectedFormat {
+				t.Fatal("format expected: ", test.expectedFormat, " got: ", format)
+			}
+			if level != test.expectedLevel {
+				t.Fatal("level expected: ", test.expectedLevel, " got: ", level)
+			}
+
+		})
+	}
+}

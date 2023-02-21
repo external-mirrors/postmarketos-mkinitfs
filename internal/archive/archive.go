@@ -68,6 +68,43 @@ type archiveItems struct {
 	sync.RWMutex
 }
 
+// ExtractFormatLevel parses the given string in the format format[:level],
+// where :level is one of CompressLevel consts. If level is omitted from the
+// string, or if it can't be parsed, the level is set to the default level for
+// the given format. If format is unknown, gzip is selected. This function is
+// designed to always return something usable within this package.
+func ExtractFormatLevel(s string) (format CompressFormat, level CompressLevel) {
+
+	f, l, found := strings.Cut(s, ":")
+	if !found {
+		l = "default"
+	}
+
+	level = CompressLevel(strings.ToLower(l))
+	format = CompressFormat(strings.ToLower(f))
+	switch level {
+
+	}
+	switch level {
+	case LevelBest:
+	case LevelDefault:
+	case LevelFast:
+	default:
+		log.Print("Unknown or no compression level set, using default")
+		level = LevelDefault
+	}
+
+	switch format {
+	case FormatGzip:
+	case FormatZstd:
+	default:
+		log.Print("Unknown or no compression format set, using gzip")
+		format = FormatGzip
+	}
+
+	return
+}
+
 // Adds the given item to the archiveItems, only if it doesn't already exist in
 // the list. The items are kept sorted in ascending order.
 func (a *archiveItems) add(item archiveItem) {
