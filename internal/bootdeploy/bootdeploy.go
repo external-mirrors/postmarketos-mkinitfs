@@ -8,8 +8,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-
-	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/misc"
 )
 
 type BootDeploy struct {
@@ -87,14 +85,10 @@ func bootDeploy(workDir string, outDir string) error {
 		"-d", workDir,
 		"-o", outDir,
 		"initramfs-extra")
-	if !misc.Exists(cmd.Path) {
-		return errors.New("boot-deploy command not found")
-	}
 
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
-		log.Print("'boot-deploy' command failed")
 		return err
 	}
 
