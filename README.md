@@ -1,5 +1,8 @@
-`postmarketos-mkinitfs` is a tool for generating an initramfs (and installing
-it) on postmarketOS.
+`mkinitfs` is a tool for generating an initramfs. It was originally designed
+for postmarketOS, but a long term design goal is to be as distro-agnostic as
+possible. It's capable of generating a split initramfs, in the style used by
+postmarketOS, and supports running `boot-deploy` to install/finalize boot files
+on a device.
 
 ## Building
 
@@ -34,12 +37,12 @@ $ make test
 
 ## Usage
 
-The application uses configuration from `/etc/deviceinfo`, and does not support
-any other options at runtime. It can be run simply by executing:
+The tool can be run with no options:
 
 ```
-$ postmarketos-mkinitfs
+# mkinitfs
 ```
 
-For historical reasons, a symlink from `mkinitfs` to `postmarketos-mkinitfs` is
-also installed by the makefile's `install` target.
+Configuration is done through a series of flat text files that list directories
+and files, and by placing scripts in specific directories. See `man 1 mkinitfs`
+for more information.
