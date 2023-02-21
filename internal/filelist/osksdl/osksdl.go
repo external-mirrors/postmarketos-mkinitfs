@@ -28,8 +28,11 @@ func New(mesaDriverName string) *OskSdl {
 // disk (d)encryption
 func (s *OskSdl) List() (*filelist.FileList, error) {
 	files := filelist.NewFileList()
-	if !misc.Exists("/usr/bin/osk-sdl") {
+
+	if exists, err := misc.Exists("/usr/bin/osk-sdl"); !exists {
 		return files, nil
+	} else if err != nil {
+		return files, fmt.Errorf("received unexpected error when getting status for %q: %w", "/usr/bin/osk-sdl", err)
 	}
 
 	log.Println("- Including osk-sdl support")
@@ -145,8 +148,10 @@ func getOskConfFontPath(oskConfPath string) (string, error) {
 			path = fields[2]
 		}
 	}
-	if !misc.Exists(path) {
+	if exists, err := misc.Exists(path); !exists {
 		return path, fmt.Errorf("unable to find font: %s", path)
+	} else if err != nil {
+		return path, fmt.Errorf("received unexpected error when getting status for %q: %w", path, err)
 	}
 
 	return path, nil

@@ -48,9 +48,12 @@ func main() {
 	}
 
 	deviceinfoFile := "/etc/deviceinfo"
-	if !misc.Exists(deviceinfoFile) {
+	if exists, err := misc.Exists(deviceinfoFile); !exists {
 		log.Printf("NOTE: %q not found, this file is required by mkinitfs.\n", deviceinfoFile)
 		return
+	} else if err != nil {
+		retCode = 1
+		log.Printf("received unexpected error when getting status for %q: %s", deviceinfoFile, err)
 	}
 
 	devinfo, err := deviceinfo.ReadDeviceinfo(deviceinfoFile)

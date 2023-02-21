@@ -40,10 +40,12 @@ func (m *Modules) List() (*filelist.FileList, error) {
 	files := filelist.NewFileList()
 
 	modDir := filepath.Join("/lib/modules", kernVer)
-	if !misc.Exists(modDir) {
+	if exists, err := misc.Exists(modDir); !exists {
 		// dir /lib/modules/<kernel> if kernel built without module support, so just print a message
 		log.Printf("-- kernel module directory not found: %q, not including modules", modDir)
 		return files, nil
+	} else if err != nil {
+		return nil, fmt.Errorf("received unexpected error when getting status for %q: %w", modDir, err)
 	}
 
 	// modules.* required by modprobe
@@ -148,8 +150,10 @@ func getModulesInDir(modPath string) (files []string, err error) {
 func getModule(modName string, modDir string) (files []string, err error) {
 
 	modDep := filepath.Join(modDir, "modules.dep")
-	if !misc.Exists(modDep) {
+	if exists, err := misc.Exists(modDep); !exists {
 		return nil, fmt.Errorf("kernel module.dep not found: %s", modDir)
+	} else if err != nil {
+		return nil, fmt.Errorf("received unexpected error when getting module.dep status: %w", err)
 	}
 
 	fd, err := os.Open(modDep)
@@ -165,9 +169,12 @@ func getModule(modName string, modDir string) (files []string, err error) {
 
 	for _, dep := range deps {
 		p := filepath.Join(modDir, dep)
-		if !misc.Exists(p) {
+		if exists, err := misc.Exists(p); !exists {
 			return nil, fmt.Errorf("tried to include a module that doesn't exist in the modules directory (%s): %s", modDir, p)
+		} else if err != nil {
+			return nil, fmt.Errorf("received unexpected error when getting status for %q: %w", p, err)
 		}
+
 		files = append(files, p)
 	}
 

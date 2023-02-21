@@ -4,6 +4,7 @@
 package misc
 
 import (
+	"errors"
 	"log"
 	"os"
 	"time"
@@ -47,10 +48,18 @@ func TimeFunc(start time.Time, name string) {
 	log.Printf("%s completed in: %s", name, elapsed)
 }
 
-// Exists tests if the given file/dir exists or not
-func Exists(file string) bool {
-	if _, err := os.Stat(file); err == nil {
-		return true
+// Exists tests if the given file/dir exists or not. Returns any errors related
+// to os.Stat if the type is *not* ErrNotExist. If an error is returned, then
+// the value of the returned boolean cannot be trusted.
+func Exists(file string) (bool, error) {
+	_, err := os.Stat(file)
+	if err == nil {
+		return true, nil
+	} else if errors.Is(err, os.ErrNotExist) {
+		// Don't return the error, the file doesn't exist which is OK
+		return false, nil
 	}
-	return false
+
+	// Other errors from os.Stat returned here
+	return false, err
 }
