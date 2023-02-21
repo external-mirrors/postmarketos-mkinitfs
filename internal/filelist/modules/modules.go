@@ -127,7 +127,6 @@ func slurpModules(fd io.Reader, modDir string) (*filelist.FileList, error) {
 
 func getModulesInDir(modPath string) (files []string, err error) {
 	err = filepath.Walk(modPath, func(path string, f os.FileInfo, err error) error {
-		// TODO: need to support more extensions?
 		if filepath.Ext(path) != ".ko" && filepath.Ext(path) != ".xz" {
 			return nil
 		}
@@ -145,8 +144,6 @@ func getModulesInDir(modPath string) (files []string, err error) {
 // file and all of its dependencies.
 // Note: it's not necessarily fatal if the module is not found, since it may
 // have been built into the kernel
-// TODO: look for it in modules.builtin, and make it fatal if it can't be found
-// anywhere
 func getModule(modName string, modDir string) (files []string, err error) {
 
 	modDep := filepath.Join(modDir, "modules.dep")
