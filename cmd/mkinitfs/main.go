@@ -49,9 +49,7 @@ func main() {
 
 	deviceinfoFile := "/etc/deviceinfo"
 	if !misc.Exists(deviceinfoFile) {
-		log.Print("NOTE: deviceinfo (from device package) not installed yet, " +
-			"not building the initramfs now (it should get built later " +
-			"automatically.)")
+		log.Printf("NOTE: %q not found, this file is required by mkinitfs.\n", deviceinfoFile)
 		return
 	}
 
