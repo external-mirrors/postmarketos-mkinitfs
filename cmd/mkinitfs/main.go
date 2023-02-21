@@ -22,6 +22,7 @@ import (
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/filelist/modules"
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/filelist/osksdl"
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/misc"
+	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/osutil"
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/pkgs/deviceinfo"
 )
 
@@ -63,7 +64,7 @@ func main() {
 
 	defer misc.TimeFunc(time.Now(), "mkinitfs")
 
-	kernVer, err := misc.GetKernelVersion()
+	kernVer, err := osutil.GetKernelVersion()
 	if err != nil {
 		log.Println(err)
 		retCode = 1

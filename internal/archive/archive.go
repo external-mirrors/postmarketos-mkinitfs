@@ -19,7 +19,7 @@ import (
 	"github.com/cavaliercoder/go-cpio"
 	"github.com/klauspost/pgzip"
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/filelist"
-	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/misc"
+	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/osutil"
 )
 
 type Archive struct {
@@ -191,7 +191,7 @@ func (archive *Archive) addFile(source string, dest string) error {
 		}
 		// make sure target is an absolute path
 		if !filepath.IsAbs(target) {
-			target, err = misc.RelativeSymlinkTargetToDir(target, filepath.Dir(source))
+			target, err = osutil.RelativeSymlinkTargetToDir(target, filepath.Dir(source))
 			if err != nil {
 				return err
 			}

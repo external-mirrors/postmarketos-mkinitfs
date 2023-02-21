@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/osutil"
 )
 
 func GetFiles(list []string, required bool) (files []string, err error) {
@@ -150,7 +152,7 @@ func getBinaryDeps(file string) ([]string, error) {
 			return nil, fmt.Errorf("getBinaryDeps: unable to read symlink %q: %w", file, err)
 		}
 		if !filepath.IsAbs(target) {
-			target, err = RelativeSymlinkTargetToDir(target, filepath.Dir(file))
+			target, err = osutil.RelativeSymlinkTargetToDir(target, filepath.Dir(file))
 			if err != nil {
 				return nil, err
 			}

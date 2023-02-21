@@ -12,6 +12,7 @@ import (
 
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/filelist"
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/misc"
+	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/osutil"
 )
 
 type Modules struct {
@@ -31,7 +32,7 @@ func New(modulesList []string, modulesListPath string) *Modules {
 func (m *Modules) List() (*filelist.FileList, error) {
 	log.Println("- Including kernel modules")
 
-	kernVer, err := misc.GetKernelVersion()
+	kernVer, err := osutil.GetKernelVersion()
 	if err != nil {
 		return nil, err
 	}
