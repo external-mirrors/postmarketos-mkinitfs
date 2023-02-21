@@ -33,8 +33,12 @@ func main() {
 	defer func() { os.Exit(retCode) }()
 
 	outDir := flag.String("d", "/boot", "Directory to output initfs(-extra) and other boot files")
+
 	var showVersion bool
 	flag.BoolVar(&showVersion, "version", false, "Print version and quit.")
+
+	var disableBootDeploy bool
+	flag.BoolVar(&disableBootDeploy, "no-bootdeploy", false, "Disable running 'boot-deploy' after generating archives.")
 	flag.Parse()
 
 	if showVersion {
@@ -114,13 +118,14 @@ func main() {
 	}
 
 	// Final processing of initramfs / kernel is done by boot-deploy
-	if err := bootDeploy(workDir, *outDir, devinfo.UbootBoardname); err != nil {
-		log.Println(err)
-		log.Println("bootDeploy failed")
-		retCode = 1
-		return
+	if !disableBootDeploy {
+		if err := bootDeploy(workDir, *outDir, devinfo.UbootBoardname); err != nil {
+			log.Println(err)
+			log.Println("bootDeploy failed")
+			retCode = 1
+			return
+		}
 	}
-
 }
 
 func bootDeploy(workDir, outDir, ubootBoardname string) error {
