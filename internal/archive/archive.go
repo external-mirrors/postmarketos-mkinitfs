@@ -196,9 +196,6 @@ func (archive *Archive) addFile(source string, dest string) error {
 				return err
 			}
 		}
-		// TODO: add verbose mode, print stuff like this:
-		// log.Printf("symlink: %q, target: %q", file, target)
-		// write symlink target
 		err = archive.addFile(target, target)
 		return err
 	}
