@@ -120,7 +120,7 @@ func main() {
 	if !disableBootDeploy {
 		if err := bootDeploy(workDir, *outDir, devinfo.UbootBoardname); err != nil {
 			log.Println(err)
-			log.Println("bootDeploy failed")
+			log.Println("boot-deploy failed")
 			retCode = 1
 			return
 		}
