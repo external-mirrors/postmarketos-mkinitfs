@@ -45,14 +45,16 @@ type Archive struct {
 	cpioWriter      *cpio.Writer
 	buf             *bytes.Buffer
 	compress_format CompressFormat
+	compress_level  CompressLevel
 }
 
-func New(format CompressFormat) (*Archive, error) {
+func New(format CompressFormat, level CompressLevel) (*Archive, error) {
 	buf := new(bytes.Buffer)
 	archive := &Archive{
 		cpioWriter:      cpio.NewWriter(buf),
 		buf:             buf,
 		compress_format: format,
+		compress_level:  level,
 	}
 
 	return archive, nil
