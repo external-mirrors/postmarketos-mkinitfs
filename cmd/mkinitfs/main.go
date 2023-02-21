@@ -65,6 +65,7 @@ func main() {
 
 	// deviceinfo.InitfsCompression needs a little more post-processing
 	compressionFormat, compressionLevel := archive.ExtractFormatLevel(devinfo.InitfsCompression)
+	log.Printf("Using compression format %s with level %q\n", compressionFormat, compressionLevel)
 
 	defer misc.TimeFunc(time.Now(), "mkinitfs")
 
