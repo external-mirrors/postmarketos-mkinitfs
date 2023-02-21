@@ -284,9 +284,26 @@ func (archive *Archive) writeCompressed(path string, mode os.FileMode) error {
 
 	switch archive.compress_format {
 	case FormatGzip:
-		compressor = gzip.NewWriter(fd)
+		level := gzip.DefaultCompression
+		switch archive.compress_level {
+		case LevelBest:
+			level = gzip.BestCompression
+		case LevelFast:
+			level = gzip.BestSpeed
+		}
+		compressor, err = gzip.NewWriterLevel(fd, level)
+		if err != nil {
+			return err
+		}
 	case FormatZstd:
-		compressor, err = zstd.NewWriter(fd)
+		level := zstd.SpeedDefault
+		switch archive.compress_level {
+		case LevelBest:
+			level = zstd.SpeedBestCompression
+		case LevelFast:
+			level = zstd.SpeedFastest
+		}
+		compressor, err = zstd.NewWriter(fd, zstd.WithEncoderLevel(level))
 		if err != nil {
 			return err
 		}
