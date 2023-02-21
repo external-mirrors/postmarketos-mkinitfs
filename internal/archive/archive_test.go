@@ -243,6 +243,12 @@ func TestExtractFormatLevel(t *testing.T) {
 			expectedFormat: FormatGzip,
 			expectedLevel:  LevelDefault,
 		},
+		{
+			name:           "lzma, fast",
+			in:             "lzma:fast",
+			expectedFormat: FormatLzma,
+			expectedLevel:  LevelDefault,
+		},
 	}
 
 	for _, test := range tests {

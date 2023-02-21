@@ -18,6 +18,7 @@ import (
 
 	"github.com/cavaliercoder/go-cpio"
 	"github.com/klauspost/compress/zstd"
+	"github.com/ulikunitz/xz"
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/filelist"
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/osutil"
 )
@@ -26,6 +27,7 @@ type CompressFormat string
 
 const (
 	FormatGzip CompressFormat = "gzip"
+	FormatLzma CompressFormat = "lzma"
 	FormatZstd CompressFormat = "zstd"
 )
 
@@ -98,6 +100,9 @@ func ExtractFormatLevel(s string) (format CompressFormat, level CompressLevel) {
 
 	switch format {
 	case FormatGzip:
+	case FormatLzma:
+		log.Println("Format lzma doesn't support a compression level, using default settings")
+		level = LevelDefault
 	case FormatZstd:
 	default:
 		log.Print("Unknown or no compression format set, using gzip")
@@ -292,6 +297,11 @@ func (archive *Archive) writeCompressed(path string, mode os.FileMode) error {
 			level = gzip.BestSpeed
 		}
 		compressor, err = gzip.NewWriterLevel(fd, level)
+		if err != nil {
+			return err
+		}
+	case FormatLzma:
+		compressor, err = xz.NewWriter(fd)
 		if err != nil {
 			return err
 		}
