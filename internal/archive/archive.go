@@ -29,6 +29,17 @@ const (
 	FormatZstd CompressFormat = "zstd"
 )
 
+type CompressLevel string
+
+const (
+	// Mapped to the "default" level for the given format
+	LevelDefault CompressLevel = "default"
+	// Maps to the fastest compression level for the given format
+	LevelFast CompressLevel = "fast"
+	// Maps to the best compression level for the given format
+	LevelBest CompressLevel = "best"
+)
+
 type Archive struct {
 	items           archiveItems
 	cpioWriter      *cpio.Writer
