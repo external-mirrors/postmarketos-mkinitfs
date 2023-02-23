@@ -1,6 +1,6 @@
 module gitlab.com/postmarketOS/postmarketos-mkinitfs
 
-go 1.16
+go 1.20
 
 require (
 	github.com/cavaliercoder/go-cpio v0.0.0-20180626203310-925f9528c45e
