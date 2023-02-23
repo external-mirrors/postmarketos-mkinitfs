@@ -1,8 +1,9 @@
 .POSIX:
 .SUFFIXES: .1 .1.scd
 
-VERSION?=`git describe --tags --dirty 2>/dev/null || echo 0.0.0`
+VERSION?=$(shell git describe --tags --dirty 2>/dev/null || echo 0.0.0)
 VPATH=doc
+VENDORED="mkinitfs-vendor-$(VERSION)"
 PREFIX?=/usr/local
 BINDIR?=$(PREFIX)/sbin
 MANDIR?=$(PREFIX)/share/man
@@ -45,6 +46,7 @@ test:
 
 clean:
 	$(RM) mkinitfs $(DOCS) 
+	$(RM) $(VENDORED)*
 
 install: $(DOCS) mkinitfs
 	install -Dm755 mkinitfs -t $(DESTDIR)$(BINDIR)/
@@ -57,10 +59,16 @@ checkinstall:
 
 RMDIR_IF_EMPTY:=sh -c '! [ -d $$0 ] || ls -1qA $$0 | grep -q . || rmdir $$0'
 
+vendor:
+	go mod vendor
+	tar czf $(VENDORED).tar.gz vendor/
+	sha512sum $(VENDORED).tar.gz > $(VENDORED).tar.gz.sha512
+	$(RM) -rf vendor
+
 uninstall:
 	$(RM) $(DESTDIR)$(BINDIR)/mkinitfs
 	${RMDIR_IF_EMPTY} $(DESTDIR)$(BINDIR)
 	$(RM) $(DESTDIR)$(MANDIR)/man1/mkinitfs.1
 	$(RMDIR_IF_EMPTY) $(DESTDIR)$(MANDIR)/man1
 
-.PHONY: all clean install uninstall test
+.PHONY: all clean install uninstall test vendor

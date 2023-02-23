@@ -1,2 +1,5 @@
-/mkinitfs
 /*.1
+/*.tar.gz
+/*.sha512
+/mkinitfs
+/vendor
