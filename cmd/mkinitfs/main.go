@@ -111,6 +111,8 @@ func main() {
 		hookfiles.New("/etc/mkinitfs/files-extra"),
 		hookscripts.New("/usr/share/mkinitfs/hooks-extra"),
 		hookscripts.New("/etc/mkinitfs/hooks-extra"),
+		modules.New([]string{}, "/usr/share/mkinitfs/modules-extra"),
+		modules.New([]string{}, "/etc/mkinitfs/modules-extra"),
 		osksdl.New(devinfo.MesaDriver),
 	}); err != nil {
 		log.Println(err)

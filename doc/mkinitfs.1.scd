@@ -97,11 +97,11 @@ create/manage. mkinitfs reads configuration from */usr/share/mkinitfs* first, an
 	under */hooks-extra* for the initramfs-extra.
 
 ## /usr/share/mkinitfs/modules, /etc/mkinitfs/modules
+## /usr/share/mkinitfs/modules-extra, /etc/mkinitfs/modules-extra
 
 	Files with the *.modules* extention in these directories are lists of
-	kernel modules to include in the initramfs. No modules are placed in
-	the initramfs-extra archive. Individual modules and directories can be
-	listed in the files here. Globbing is also supported.
+	kernel modules to include in the initramfs. Individual modules and
+	directories can be listed in the files here. Globbing is also supported.
 
 	Modules are installed in the initramfs archive under the same path they
 	exist on the system where mkinitfs is executed.
