@@ -99,6 +99,7 @@ func main() {
 		hookscripts.New("/usr/share/mkinitfs/hooks"),
 		hookscripts.New("/etc/mkinitfs/hooks"),
 		modules.New(strings.Fields(devinfo.ModulesInitfs), "/usr/share/mkinitfs/modules"),
+		modules.New([]string{}, "/etc/mkinitfs/modules"),
 	}); err != nil {
 		log.Println(err)
 		log.Println("failed to generate: ", "initramfs")
