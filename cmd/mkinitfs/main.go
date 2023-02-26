@@ -111,7 +111,10 @@ func main() {
 		return
 	}
 
-	if err := generateArchive("initramfs-extra", compressionFormat, compressionLevel, workDir, []filelist.FileLister{
+	// Note: compression disabled for initramfs-extra, since it slows down boot
+	// and can add more requirements to the initramfs (e.g. need to add support
+	// for extracting zstd)
+	if err := generateArchive("initramfs-extra", archive.FormatNone, archive.LevelDefault, workDir, []filelist.FileLister{
 		hookfiles.New("/usr/share/mkinitfs/files-extra"),
 		hookfiles.New("/etc/mkinitfs/files-extra"),
 		hookscripts.New("/usr/share/mkinitfs/hooks-extra"),
