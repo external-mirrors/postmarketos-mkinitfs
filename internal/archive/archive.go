@@ -279,13 +279,21 @@ func (archive *Archive) addFile(source string, dest string) error {
 	return nil
 }
 
-func (archive *Archive) writeCompressed(path string, mode os.FileMode) error {
+func (archive *Archive) writeCompressed(path string, mode os.FileMode) (err error) {
+
+	var compressor io.WriteCloser
+	defer func() {
+		e := compressor.Close()
+		if e != nil && err == nil {
+			err = e
+		}
+	}()
+
 	fd, err := os.Create(path)
 	if err != nil {
 		return err
 	}
-
-	var compressor io.WriteCloser
+	// Note: fd.Close omitted since it'll be closed in "compressor"
 
 	switch archive.compress_format {
 	case FormatGzip:
@@ -323,10 +331,6 @@ func (archive *Archive) writeCompressed(path string, mode os.FileMode) error {
 	}
 
 	if _, err = io.Copy(compressor, archive.buf); err != nil {
-		return err
-	}
-
-	if err := compressor.Close(); err != nil {
 		return err
 	}
 
