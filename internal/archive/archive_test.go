@@ -238,7 +238,7 @@ func TestExtractFormatLevel(t *testing.T) {
 			expectedLevel:  LevelBest,
 		},
 		{
-			name:           "none, none",
+			name:           "<empty>, <empty>",
 			in:             "",
 			expectedFormat: FormatGzip,
 			expectedLevel:  LevelDefault,
@@ -247,6 +247,12 @@ func TestExtractFormatLevel(t *testing.T) {
 			name:           "lzma, fast",
 			in:             "lzma:fast",
 			expectedFormat: FormatLzma,
+			expectedLevel:  LevelDefault,
+		},
+		{
+			name:           "none",
+			in:             "none",
+			expectedFormat: FormatNone,
 			expectedLevel:  LevelDefault,
 		},
 	}

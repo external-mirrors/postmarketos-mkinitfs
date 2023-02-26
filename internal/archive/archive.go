@@ -29,6 +29,7 @@ const (
 	FormatGzip CompressFormat = "gzip"
 	FormatLzma CompressFormat = "lzma"
 	FormatZstd CompressFormat = "zstd"
+	FormatNone CompressFormat = "none"
 )
 
 type CompressLevel string
@@ -103,6 +104,7 @@ func ExtractFormatLevel(s string) (format CompressFormat, level CompressLevel) {
 	case FormatLzma:
 		log.Println("Format lzma doesn't support a compression level, using default settings")
 		level = LevelDefault
+	case FormatNone:
 	case FormatZstd:
 	default:
 		log.Print("Unknown or no compression format set, using gzip")
@@ -313,6 +315,8 @@ func (archive *Archive) writeCompressed(path string, mode os.FileMode) (err erro
 		if err != nil {
 			return err
 		}
+	case FormatNone:
+		compressor = fd
 	case FormatZstd:
 		level := zstd.SpeedDefault
 		switch archive.compress_level {
