@@ -47,6 +47,8 @@ func main() {
 		return
 	}
 
+	log.Default().SetFlags(log.Lmicroseconds)
+
 	deviceinfoFile := "/etc/deviceinfo"
 	if exists, err := misc.Exists(deviceinfoFile); !exists {
 		log.Printf("NOTE: %q not found, this file is required by mkinitfs.\n", deviceinfoFile)
