@@ -2,6 +2,7 @@ package bootdeploy
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -79,7 +80,7 @@ func bootDeploy(workDir string, outDir string) error {
 		return err
 	}
 	if err := kernFileCopy.Close(); err != nil {
-		return err
+		return fmt.Errorf("error closing %s: %w", kernFilename, err)
 	}
 
 	// boot-deploy -i initramfs -k vmlinuz-postmarketos-rockchip -d /tmp/cpio -o /tmp/foo initramfs-extra
