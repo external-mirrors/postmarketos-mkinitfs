@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"strings"
 )
@@ -68,7 +69,8 @@ func bootDeploy(workDir string, outDir string) error {
 	}
 	defer kernFd.Close()
 
-	kernFileCopy, err := os.Create(filepath.Join(workDir, "vmlinuz"))
+	kernFilename := path.Base(kernFile)
+	kernFileCopy, err := os.Create(filepath.Join(workDir, kernFilename))
 	if err != nil {
 		return err
 	}
@@ -83,7 +85,7 @@ func bootDeploy(workDir string, outDir string) error {
 	// boot-deploy -i initramfs -k vmlinuz-postmarketos-rockchip -d /tmp/cpio -o /tmp/foo initramfs-extra
 	cmd := exec.Command("boot-deploy",
 		"-i", "initramfs",
-		"-k", "vmlinuz",
+		"-k", kernFilename,
 		"-d", workDir,
 		"-o", outDir,
 		"initramfs-extra")
