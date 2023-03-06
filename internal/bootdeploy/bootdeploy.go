@@ -76,7 +76,9 @@ func bootDeploy(workDir string, outDir string) error {
 	if _, err = io.Copy(kernFileCopy, kernFd); err != nil {
 		return err
 	}
-	kernFileCopy.Close()
+	if err := kernFileCopy.Close(); err != nil {
+		return err
+	}
 
 	// boot-deploy -i initramfs -k vmlinuz-postmarketos-rockchip -d /tmp/cpio -o /tmp/foo initramfs-extra
 	cmd := exec.Command("boot-deploy",
