@@ -65,9 +65,6 @@ func main() {
 		return
 	}
 
-	// deviceinfo.InitfsCompression needs a little more post-processing
-	compressionFormat, compressionLevel := archive.ExtractFormatLevel(devinfo.InitfsCompression)
-
 	defer misc.TimeFunc(time.Now(), "mkinitfs")
 
 	kernVer, err := osutil.GetKernelVersion()
@@ -96,6 +93,8 @@ func main() {
 	log.Print("Generating for kernel version: ", kernVer)
 	log.Print("Output directory: ", *outDir)
 
+	// deviceinfo.InitfsCompression needs a little more post-processing
+	compressionFormat, compressionLevel := archive.ExtractFormatLevel(devinfo.InitfsCompression)
 	if err := generateArchive("initramfs", compressionFormat, compressionLevel, workDir, []filelist.FileLister{
 		hookdirs.New("/usr/share/mkinitfs/dirs"),
 		hookdirs.New("/etc/mkinitfs/dirs"),
@@ -112,10 +111,9 @@ func main() {
 		return
 	}
 
-	// Note: compression disabled for initramfs-extra, since it slows down boot
-	// and can add more requirements to the initramfs (e.g. need to add support
-	// for extracting zstd)
-	if err := generateArchive("initramfs-extra", archive.FormatNone, archive.LevelDefault, workDir, []filelist.FileLister{
+	// deviceinfo.InitfsExtraCompression needs a little more post-processing
+	compressionFormat, compressionLevel = archive.ExtractFormatLevel(devinfo.InitfsExtraCompression)
+	if err := generateArchive("initramfs-extra", compressionFormat, compressionLevel, workDir, []filelist.FileLister{
 		hookfiles.New("/usr/share/mkinitfs/files-extra"),
 		hookfiles.New("/etc/mkinitfs/files-extra"),
 		hookscripts.New("/usr/share/mkinitfs/hooks-extra"),
