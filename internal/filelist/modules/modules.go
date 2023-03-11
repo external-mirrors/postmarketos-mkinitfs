@@ -30,7 +30,7 @@ func New(modulesList []string, modulesListPath string) *Modules {
 }
 
 func (m *Modules) List() (*filelist.FileList, error) {
-	log.Println("- Including kernel modules from ", m.modulesListPath)
+	log.Printf("- Searching for kernel modules from %s", m.modulesListPath)
 
 	kernVer, err := osutil.GetKernelVersion()
 	if err != nil {

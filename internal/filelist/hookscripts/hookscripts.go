@@ -21,7 +21,7 @@ func New(scriptsDir string) *HookScripts {
 }
 
 func (h *HookScripts) List() (*filelist.FileList, error) {
-	log.Printf("- Including hook scripts from %s", h.scriptsDir)
+	log.Printf("- Searching for hook scripts from %s", h.scriptsDir)
 
 	files := filelist.NewFileList()
 

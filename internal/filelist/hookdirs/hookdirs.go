@@ -23,7 +23,7 @@ func New(path string) *HookDirs {
 }
 
 func (h *HookDirs) List() (*filelist.FileList, error) {
-	log.Printf("- Creating directories specified in %s", h.path)
+	log.Printf("- Searching for directories specified in %s", h.path)
 
 	files := filelist.NewFileList()
 	fileInfo, err := os.ReadDir(h.path)

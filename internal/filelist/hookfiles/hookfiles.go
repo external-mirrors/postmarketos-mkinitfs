@@ -26,7 +26,7 @@ func New(filePath string) *HookFiles {
 }
 
 func (h *HookFiles) List() (*filelist.FileList, error) {
-	log.Printf("- Including file lists from %s", h.filePath)
+	log.Printf("- Searching for file lists from %s", h.filePath)
 
 	files := filelist.NewFileList()
 	fileInfo, err := os.ReadDir(h.filePath)
