@@ -67,7 +67,6 @@ func main() {
 
 	// deviceinfo.InitfsCompression needs a little more post-processing
 	compressionFormat, compressionLevel := archive.ExtractFormatLevel(devinfo.InitfsCompression)
-	log.Printf("Using compression format %s with level %q\n", compressionFormat, compressionLevel)
 
 	defer misc.TimeFunc(time.Now(), "mkinitfs")
 
@@ -152,6 +151,8 @@ func bootDeploy(workDir, outDir, ubootBoardname string) error {
 
 func generateArchive(name string, format archive.CompressFormat, level archive.CompressLevel, path string, features []filelist.FileLister) error {
 	log.Printf("== Generating %s ==\n", name)
+	log.Printf("- Using compression format %s with level %q\n", format, level)
+
 	defer misc.TimeFunc(time.Now(), name)
 	a, err := archive.New(format, level)
 	if err != nil {
