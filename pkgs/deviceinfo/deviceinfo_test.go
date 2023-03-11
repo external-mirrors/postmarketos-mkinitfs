@@ -21,6 +21,7 @@ func TestNameToField(t *testing.T) {
 		{"deviceinfo_modules_initfs", "ModulesInitfs"},
 		{"modules_initfs", "ModulesInitfs"},
 		{"deviceinfo_modules_initfs___", "ModulesInitfs"},
+		{"deviceinfo_initfs_extra_compression", "InitfsExtraCompression"},
 	}
 
 	for _, table := range tables {

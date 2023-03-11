@@ -33,12 +33,17 @@ mkinitfs reads deviceinfo values from */etc/deviceinfo*. The following variables
 are *required* by mkinitfs:
 
 	- deviceinfo_initfs_compression
+	- deviceinfo_initfs_extra_compression
 	- deviceinfo_mesa_driver
 	- deviceinfo_modules_initfs
 	- deviceinfo_uboot_boardname
 
 It is a design goal to keep the number of required variables from deviceinfo to
 a bare minimum, and to require only variables that don't hold lists of things.
+
+*NOTE*: When deviceinfo_initfs_extra_compression is set, make sure that the
+necessary tools to extract the configured archive format are in the initramfs
+archive.
 
 # DIRECTORIES
 

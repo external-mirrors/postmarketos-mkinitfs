@@ -14,10 +14,11 @@ import (
 )
 
 type DeviceInfo struct {
-	InitfsCompression string
-	MesaDriver        string
-	ModulesInitfs     string
-	UbootBoardname    string
+	InitfsCompression      string
+	InitfsExtraCompression string
+	MesaDriver             string
+	ModulesInitfs          string
+	UbootBoardname         string
 }
 
 func ReadDeviceinfo(file string) (DeviceInfo, error) {
