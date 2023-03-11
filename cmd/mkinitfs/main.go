@@ -100,8 +100,8 @@ func main() {
 		hookdirs.New("/etc/mkinitfs/dirs"),
 		hookfiles.New("/usr/share/mkinitfs/files"),
 		hookfiles.New("/etc/mkinitfs/files"),
-		hookscripts.New("/usr/share/mkinitfs/hooks"),
-		hookscripts.New("/etc/mkinitfs/hooks"),
+		hookscripts.New("/usr/share/mkinitfs/hooks", "/hooks"),
+		hookscripts.New("/etc/mkinitfs/hooks", "/hooks"),
 		modules.New(strings.Fields(devinfo.ModulesInitfs), "/usr/share/mkinitfs/modules"),
 		modules.New([]string{}, "/etc/mkinitfs/modules"),
 	}); err != nil {
@@ -116,8 +116,8 @@ func main() {
 	if err := generateArchive("initramfs-extra", compressionFormat, compressionLevel, workDir, []filelist.FileLister{
 		hookfiles.New("/usr/share/mkinitfs/files-extra"),
 		hookfiles.New("/etc/mkinitfs/files-extra"),
-		hookscripts.New("/usr/share/mkinitfs/hooks-extra"),
-		hookscripts.New("/etc/mkinitfs/hooks-extra"),
+		hookscripts.New("/usr/share/mkinitfs/hooks-extra", "/hooks-extra"),
+		hookscripts.New("/etc/mkinitfs/hooks-extra", "/hooks-extra"),
 		modules.New([]string{}, "/usr/share/mkinitfs/modules-extra"),
 		modules.New([]string{}, "/etc/mkinitfs/modules-extra"),
 		osksdl.New(devinfo.MesaDriver),

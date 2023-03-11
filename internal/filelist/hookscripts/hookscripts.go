@@ -9,13 +9,16 @@ import (
 )
 
 type HookScripts struct {
+	destPath   string
 	scriptsDir string
 }
 
 // New returns a new HookScripts that will use the given path to provide a list
-// of script files.
-func New(scriptsDir string) *HookScripts {
+// of script files. The destination for each script it set to destPath, using
+// the original file name.
+func New(scriptsDir string, destPath string) *HookScripts {
 	return &HookScripts{
+		destPath:   destPath,
 		scriptsDir: scriptsDir,
 	}
 }
@@ -32,7 +35,8 @@ func (h *HookScripts) List() (*filelist.FileList, error) {
 	}
 	for _, file := range fileInfo {
 		path := filepath.Join(h.scriptsDir, file.Name())
-		files.Add(path, path)
+		log.Printf("-- Including script: %s\n", path)
+		files.Add(path, filepath.Join(h.destPath, file.Name()))
 	}
 	return files, nil
 }
