@@ -30,8 +30,6 @@ func New(modulesList []string, modulesListPath string) *Modules {
 }
 
 func (m *Modules) List() (*filelist.FileList, error) {
-	log.Printf("- Searching for kernel modules from %s", m.modulesListPath)
-
 	kernVer, err := osutil.GetKernelVersion()
 	if err != nil {
 		return nil, err
@@ -66,6 +64,7 @@ func (m *Modules) List() (*filelist.FileList, error) {
 	}
 
 	// slurp up modules from lists in modulesListPath
+	log.Printf("- Searching for kernel modules from %s", m.modulesListPath)
 	fileInfo, err := os.ReadDir(m.modulesListPath)
 	if err != nil {
 		log.Println("-- Unable to find dir, skipping...")
