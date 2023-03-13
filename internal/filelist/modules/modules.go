@@ -16,8 +16,8 @@ import (
 )
 
 type Modules struct {
-	modulesList     []string
 	modulesListPath string
+	modulesList     []string
 }
 
 // New returns a new Modules that will use the given moduleto provide a list
