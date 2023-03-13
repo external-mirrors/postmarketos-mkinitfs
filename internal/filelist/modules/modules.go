@@ -126,7 +126,11 @@ func slurpModules(fd io.Reader, modDir string) (*filelist.FileList, error) {
 }
 
 func getModulesInDir(modPath string) (files []string, err error) {
-	err = filepath.Walk(modPath, func(path string, f os.FileInfo, err error) error {
+	err = filepath.Walk(modPath, func(path string, _ os.FileInfo, err error) error {
+		if err != nil {
+			// Unable to walk path
+			return err
+		}
 		if filepath.Ext(path) != ".ko" && filepath.Ext(path) != ".xz" {
 			return nil
 		}
