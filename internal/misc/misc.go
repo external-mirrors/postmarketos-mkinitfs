@@ -45,7 +45,7 @@ func RemoveDuplicates(in []string) (out []string) {
 //	defer misc.TimeFunc(time.Now(), "foo")
 func TimeFunc(start time.Time, name string) {
 	elapsed := time.Since(start)
-	log.Printf("%s completed in: %s", name, elapsed)
+	log.Printf("%s completed in: %.2fs", name, elapsed.Seconds())
 }
 
 // Exists tests if the given file/dir exists or not. Returns any errors related
