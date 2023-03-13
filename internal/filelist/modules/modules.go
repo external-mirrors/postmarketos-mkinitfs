@@ -53,12 +53,15 @@ func (m *Modules) List() (*filelist.FileList, error) {
 	}
 
 	// slurp up given list of modules
-	for _, module := range m.modulesList {
-		if modFilelist, err := getModule(module, modDir); err != nil {
-			return nil, fmt.Errorf("unable to get modules from deviceinfo: %w", err)
-		} else {
-			for _, file := range modFilelist {
-				files.Add(file, file)
+	if len(m.modulesList) > 0 {
+		log.Printf("-- Including kernel modules from deviceinfo")
+		for _, module := range m.modulesList {
+			if modFilelist, err := getModule(module, modDir); err != nil {
+				return nil, fmt.Errorf("unable to get modules from deviceinfo: %w", err)
+			} else {
+				for _, file := range modFilelist {
+					files.Add(file, file)
+				}
 			}
 		}
 	}
