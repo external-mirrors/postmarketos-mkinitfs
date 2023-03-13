@@ -44,11 +44,11 @@ const (
 )
 
 type Archive struct {
-	items           archiveItems
 	cpioWriter      *cpio.Writer
 	buf             *bytes.Buffer
 	compress_format CompressFormat
 	compress_level  CompressLevel
+	items           archiveItems
 }
 
 func New(format CompressFormat, level CompressLevel) (*Archive, error) {
@@ -64,8 +64,8 @@ func New(format CompressFormat, level CompressLevel) (*Archive, error) {
 }
 
 type archiveItem struct {
-	sourcePath string
 	header     *cpio.Header
+	sourcePath string
 }
 
 type archiveItems struct {
