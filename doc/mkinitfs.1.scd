@@ -24,6 +24,13 @@ is purely to generate the archive(s). mkinitfs does call *boot-deploy* after
 creating the archive(s), in order to install/deploy them and any other relevant
 boot-related items onto the system.
 
+Design goals of this project are:
+
+	- Support as many distros as possible
+	- Simplify configuration, while still giving multiple opportunities to set or override defaults
+	- Execute an external app to do any boot install/setup finalization
+		- One such app is here: https://gitlab.com/postmarketOS/boot-deploy
+
 # DEVICEINFO
 
 The canonical deviceinfo "specification" is at
