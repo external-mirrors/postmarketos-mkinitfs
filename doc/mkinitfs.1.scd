@@ -30,6 +30,8 @@ Design goals of this project are:
 	- Simplify configuration, while still giving multiple opportunities to set or override defaults
 	- Execute an external app to do any boot install/setup finalization
 		- One such app is here: https://gitlab.com/postmarketOS/boot-deploy
+		- But implementation can be anything, see the section on *BOOT-DEPLOY*
+		for more info
 
 # DEVICEINFO
 
@@ -123,6 +125,30 @@ create/manage. mkinitfs reads configuration from */usr/share/mkinitfs* first, an
 	Files with the *.dirs* extension in these directories are lists of
 	directories to create within the initramfs. There is no *-extra* variant,
 	since directories are of negligible size.
+
+# BOOT-DEPLOY
+
+After generating archives, mkinitfs will execute *boot-deploy*, using *$PATH* to
+search for the app. The following commandline options are passed to it:
+
+	*-i* <initramfs filename>
+
+		Currently this is hardcoded to be "initramfs"
+
+	*-k* <kernel filename>
+	
+	*-d* <work directory>
+
+		Path to the directory containing the build artifacts from mkinitfs.
+
+	*-o* <destination directory>
+
+		Path to the directory that boot-deploy should use as its root when
+		installing files.
+
+	*initramfs-extra*
+
+		This string is the filename of the initramfs-extra archive.
 
 # AUTHORS
 
