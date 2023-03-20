@@ -141,7 +141,7 @@ func main() {
 		modules.New([]string{}, "/etc/mkinitfs/modules-extra"),
 		osksdl.New(devinfo.MesaDriver),
 	})
-	initramfsExtraAr.AddItems(initfsExtra)
+	initramfsExtraAr.AddItemsExclude(initfsExtra, initfs)
 	if err := initramfsExtraAr.Write(filepath.Join(workDir, "initramfs-extra"), os.FileMode(0644)); err != nil {
 		log.Println(err)
 		log.Println("failed to generate: ", "initramfs-extra")
