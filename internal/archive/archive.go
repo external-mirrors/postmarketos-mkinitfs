@@ -51,7 +51,7 @@ type Archive struct {
 	items           archiveItems
 }
 
-func New(format CompressFormat, level CompressLevel) (*Archive, error) {
+func New(format CompressFormat, level CompressLevel) *Archive {
 	buf := new(bytes.Buffer)
 	archive := &Archive{
 		cpioWriter:      cpio.NewWriter(buf),
@@ -60,7 +60,7 @@ func New(format CompressFormat, level CompressLevel) (*Archive, error) {
 		compress_level:  level,
 	}
 
-	return archive, nil
+	return archive
 }
 
 type archiveItem struct {

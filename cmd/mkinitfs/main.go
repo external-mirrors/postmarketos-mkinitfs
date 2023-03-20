@@ -152,10 +152,7 @@ func generateArchive(name string, format archive.CompressFormat, level archive.C
 	log.Printf("- Using compression format %s with level %q\n", format, level)
 
 	defer misc.TimeFunc(time.Now(), name)
-	a, err := archive.New(format, level)
-	if err != nil {
-		return err
-	}
+	a := archive.New(format, level)
 
 	fs := initramfs.New(features)
 	if err := a.AddItems(fs); err != nil {
