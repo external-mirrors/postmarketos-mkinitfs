@@ -70,7 +70,6 @@ func (m *Modules) List() (*filelist.FileList, error) {
 	log.Printf("- Searching for kernel modules from %s", m.modulesListPath)
 	fileInfo, err := os.ReadDir(m.modulesListPath)
 	if err != nil {
-		log.Println("-- Unable to find dir, skipping...")
 		return files, nil
 	}
 	for _, file := range fileInfo {
