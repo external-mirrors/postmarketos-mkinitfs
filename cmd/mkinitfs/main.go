@@ -93,9 +93,17 @@ func main() {
 	log.Print("Generating for kernel version: ", kernVer)
 	log.Print("Output directory: ", *outDir)
 
+	//
+	// initramfs
+	//
 	// deviceinfo.InitfsCompression needs a little more post-processing
 	compressionFormat, compressionLevel := archive.ExtractFormatLevel(devinfo.InitfsCompression)
-	if err := generateArchive("initramfs", compressionFormat, compressionLevel, workDir, []filelist.FileLister{
+	log.Printf("== Generating %s ==\n", "initramfs")
+	log.Printf("- Using compression format %s with level %q\n", compressionFormat, compressionLevel)
+
+	start := time.Now()
+	initramfsAr := archive.New(compressionFormat, compressionLevel)
+	initfs := initramfs.New([]filelist.FileLister{
 		hookdirs.New("/usr/share/mkinitfs/dirs"),
 		hookdirs.New("/etc/mkinitfs/dirs"),
 		hookfiles.New("/usr/share/mkinitfs/files"),
@@ -104,16 +112,27 @@ func main() {
 		hookscripts.New("/etc/mkinitfs/hooks", "/hooks"),
 		modules.New(strings.Fields(devinfo.ModulesInitfs), "/usr/share/mkinitfs/modules"),
 		modules.New([]string{}, "/etc/mkinitfs/modules"),
-	}); err != nil {
+	})
+	initramfsAr.AddItems(initfs)
+	if err := initramfsAr.Write(filepath.Join(workDir, "initramfs"), os.FileMode(0644)); err != nil {
 		log.Println(err)
 		log.Println("failed to generate: ", "initramfs")
 		retCode = 1
 		return
 	}
+	misc.TimeFunc(start, "initramfs")
 
+	//
+	// initramfs-extra
+	//
 	// deviceinfo.InitfsExtraCompression needs a little more post-processing
 	compressionFormat, compressionLevel = archive.ExtractFormatLevel(devinfo.InitfsExtraCompression)
-	if err := generateArchive("initramfs-extra", compressionFormat, compressionLevel, workDir, []filelist.FileLister{
+	log.Printf("== Generating %s ==\n", "initramfs-extra")
+	log.Printf("- Using compression format %s with level %q\n", compressionFormat, compressionLevel)
+
+	start = time.Now()
+	initramfsExtraAr := archive.New(compressionFormat, compressionLevel)
+	initfsExtra := initramfs.New([]filelist.FileLister{
 		hookfiles.New("/usr/share/mkinitfs/files-extra"),
 		hookfiles.New("/etc/mkinitfs/files-extra"),
 		hookscripts.New("/usr/share/mkinitfs/hooks-extra", "/hooks-extra"),
@@ -121,12 +140,15 @@ func main() {
 		modules.New([]string{}, "/usr/share/mkinitfs/modules-extra"),
 		modules.New([]string{}, "/etc/mkinitfs/modules-extra"),
 		osksdl.New(devinfo.MesaDriver),
-	}); err != nil {
+	})
+	initramfsExtraAr.AddItems(initfsExtra)
+	if err := initramfsExtraAr.Write(filepath.Join(workDir, "initramfs-extra"), os.FileMode(0644)); err != nil {
 		log.Println(err)
 		log.Println("failed to generate: ", "initramfs-extra")
 		retCode = 1
 		return
 	}
+	misc.TimeFunc(start, "initramfs-extra")
 
 	// Final processing of initramfs / kernel is done by boot-deploy
 	if !disableBootDeploy {
@@ -145,24 +167,4 @@ func bootDeploy(workDir, outDir, ubootBoardname string) error {
 
 	bd := bootdeploy.New(workDir, outDir, ubootBoardname)
 	return bd.Run()
-}
-
-func generateArchive(name string, format archive.CompressFormat, level archive.CompressLevel, path string, features []filelist.FileLister) error {
-	log.Printf("== Generating %s ==\n", name)
-	log.Printf("- Using compression format %s with level %q\n", format, level)
-
-	defer misc.TimeFunc(time.Now(), name)
-	a := archive.New(format, level)
-
-	fs := initramfs.New(features)
-	if err := a.AddItems(fs); err != nil {
-		return err
-	}
-
-	log.Println("- Writing and verifying archive: ", name)
-	if err := a.Write(filepath.Join(path, name), os.FileMode(0644)); err != nil {
-		return err
-	}
-
-	return nil
 }
