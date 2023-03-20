@@ -200,6 +200,38 @@ func (archive *Archive) AddItems(flister filelist.FileLister) error {
 	return nil
 }
 
+// AddItemsExclude is like AddItems, but takes a second FileLister that lists
+// items that should not be added to the archive from the first FileLister
+func (archive *Archive) AddItemsExclude(flister filelist.FileLister, exclude filelist.FileLister) error {
+	list, err := flister.List()
+	if err != nil {
+		return err
+	}
+
+	excludeList, err := exclude.List()
+	if err != nil {
+		return err
+	}
+
+	for i := range list.IterItems() {
+		dest, found := excludeList.Get(i.Source)
+
+		if found {
+			if i.Dest != dest {
+				found = false
+			}
+		}
+
+		if !found {
+			if err := archive.AddItem(i.Source, i.Dest); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
 // Adds the given file or directory at "source" to the archive at "dest"
 func (archive *Archive) AddItem(source string, dest string) error {
 
