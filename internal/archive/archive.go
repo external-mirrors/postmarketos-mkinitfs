@@ -184,10 +184,11 @@ func (archive *Archive) Write(path string, mode os.FileMode) error {
 	return nil
 }
 
-// Adds the given items in the map to the archive. The map format is {source path:dest path}.
-// Internally this just calls AddItem on each key,value pair in the map.
-func (archive *Archive) AddItems(f filelist.FileLister) error {
-	list, err := f.List()
+// AddItems adds the given items in the map to the archive. The map format is
+// {source path:dest path}. Internally this just calls AddItem on each
+// key,value pair in the map.
+func (archive *Archive) AddItems(flister filelist.FileLister) error {
+	list, err := flister.List()
 	if err != nil {
 		return err
 	}
