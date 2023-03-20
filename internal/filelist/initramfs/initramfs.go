@@ -9,6 +9,7 @@ import (
 // combining the output from them.
 type Initramfs struct {
 	features []filelist.FileLister
+	files    *filelist.FileList
 }
 
 // New returns a new Initramfs that generate a list of files based on the given
@@ -20,15 +21,18 @@ func New(features []filelist.FileLister) *Initramfs {
 }
 
 func (i *Initramfs) List() (*filelist.FileList, error) {
-	files := filelist.NewFileList()
+	if i.files != nil {
+		return i.files, nil
+	}
+	i.files = filelist.NewFileList()
 
 	for _, f := range i.features {
 		list, err := f.List()
 		if err != nil {
 			return nil, err
 		}
-		files.Import(list)
+		i.files.Import(list)
 	}
 
-	return files, nil
+	return i.files, nil
 }
