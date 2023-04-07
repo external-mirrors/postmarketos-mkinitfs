@@ -51,7 +51,7 @@ func (f *FileList) Import(src *FileList) {
 	}
 }
 
-func (f *FileList) AddGlobbed(src string, dest string) (error) {
+func (f *FileList) AddGlobbed(src string, dest string) error {
 	fFiles, err := misc.GetFiles([]string{src}, true)
 	if err != nil {
 		return fmt.Errorf("unable to add %q: %w", src, err)

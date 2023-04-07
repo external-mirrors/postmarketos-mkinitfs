@@ -35,8 +35,13 @@ func (h *HookScripts) List() (*filelist.FileList, error) {
 	}
 	for _, file := range fileInfo {
 		path := filepath.Join(h.scriptsDir, file.Name())
-		log.Printf("-- Including script: %s\n", path)
-		files.Add(path, filepath.Join(h.destPath, file.Name()))
+		if file.IsDir() {
+			log.Printf("-- Including dir %s\n", path)
+			files.AddGlobbed(filepath.Join(path, "*"), filepath.Join(h.destPath, file.Name()))
+		} else {
+			log.Printf("-- Including script: %s\n", path)
+			files.Add(path, filepath.Join(h.destPath, file.Name()))
+		}
 	}
 	return files, nil
 }
