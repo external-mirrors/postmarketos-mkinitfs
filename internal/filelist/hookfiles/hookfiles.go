@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/filelist"
-	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/misc"
 )
 
 type HookFiles struct {
@@ -60,22 +59,13 @@ func slurpFiles(fd io.Reader) (*filelist.FileList, error) {
 	for s.Scan() {
 		src, dest, has_dest := strings.Cut(s.Text(), ":")
 
-		fFiles, err := misc.GetFiles([]string{src}, true)
-		if err != nil {
-			return nil, fmt.Errorf("unable to add %q: %w", src, err)
+		if !has_dest {
+			dest = src
 		}
-		// loop over all returned files from GetFile
-		for _, file := range fFiles {
-			if !has_dest {
-				files.Add(file, file)
-			} else if len(fFiles) > 1 {
-				// Don't support specifying dest if src was a glob
-				// NOTE: this could support this later...
-				files.Add(file, file)
-			} else {
-				// dest path specified, and only 1 file
-				files.Add(file, dest)
-			}
+
+		err := files.AddGlobbed(src, dest)
+		if err != nil {
+			return nil, err
 		}
 	}
 

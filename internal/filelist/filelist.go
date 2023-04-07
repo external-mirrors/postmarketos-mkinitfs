@@ -1,6 +1,12 @@
 package filelist
 
-import "sync"
+import (
+	"fmt"
+	"path/filepath"
+	"sync"
+
+	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/misc"
+)
 
 type FileLister interface {
 	List() (*FileList, error)
@@ -43,6 +49,26 @@ func (f *FileList) Import(src *FileList) {
 	for i := range src.IterItems() {
 		f.Add(i.Source, i.Dest)
 	}
+}
+
+func (f *FileList) AddGlobbed(src string, dest string) (error) {
+	fFiles, err := misc.GetFiles([]string{src}, true)
+	if err != nil {
+		return fmt.Errorf("unable to add %q: %w", src, err)
+	}
+	// loop over all returned files from GetFile
+	for _, file := range fFiles {
+		if len(fFiles) > 1 {
+			// Glob with arbitrary subdirectories, so we need to
+			// remove the src path and prepend the dest path
+			f.Add(file, filepath.Join(dest, file[len(src):]))
+		} else {
+			// dest path specified, and only 1 file
+			f.Add(file, dest)
+		}
+	}
+
+	return nil
 }
 
 // iterate through the list and and send each one as a new File over the
