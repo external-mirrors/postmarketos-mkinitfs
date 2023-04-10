@@ -250,6 +250,12 @@ func TestExtractFormatLevel(t *testing.T) {
 			expectedLevel:  LevelDefault,
 		},
 		{
+			name:           "lz4, fast",
+			in:             "lz4:fast",
+			expectedFormat: FormatLz4,
+			expectedLevel:  LevelFast,
+		},
+		{
 			name:           "none",
 			in:             "none",
 			expectedFormat: FormatNone,

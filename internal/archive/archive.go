@@ -18,6 +18,7 @@ import (
 
 	"github.com/cavaliercoder/go-cpio"
 	"github.com/klauspost/compress/zstd"
+	"github.com/pierrec/lz4/v4"
 	"github.com/ulikunitz/xz"
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/filelist"
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/osutil"
@@ -28,6 +29,7 @@ type CompressFormat string
 const (
 	FormatGzip CompressFormat = "gzip"
 	FormatLzma CompressFormat = "lzma"
+	FormatLz4  CompressFormat = "lz4"
 	FormatZstd CompressFormat = "zstd"
 	FormatNone CompressFormat = "none"
 )
@@ -104,6 +106,7 @@ func ExtractFormatLevel(s string) (format CompressFormat, level CompressLevel) {
 	case FormatLzma:
 		log.Println("Format lzma doesn't support a compression level, using default settings")
 		level = LevelDefault
+	case FormatLz4:
 	case FormatNone:
 	case FormatZstd:
 	default:
@@ -348,6 +351,23 @@ func (archive *Archive) writeCompressed(path string, mode os.FileMode) (err erro
 		if err != nil {
 			return err
 		}
+	case FormatLz4:
+		// The default compression for the lz4 library is Fast, and
+		// they don't define a Default level otherwise
+		level := lz4.Fast
+		switch archive.compress_level {
+		case LevelBest:
+			level = lz4.Level9
+		case LevelFast:
+			level = lz4.Fast
+		}
+
+		var writer = lz4.NewWriter(fd)
+		err = writer.Apply(lz4.LegacyOption(true), lz4.CompressionLevelOption(level))
+		if err != nil {
+			return err
+		}
+		compressor = writer
 	case FormatNone:
 		compressor = fd
 	case FormatZstd:
