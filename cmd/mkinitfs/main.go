@@ -56,6 +56,7 @@ func main() {
 	} else if err != nil {
 		retCode = 1
 		log.Printf("received unexpected error when getting status for %q: %s", deviceinfoFile, err)
+		return
 	}
 
 	devinfo, err := deviceinfo.ReadDeviceinfo(deviceinfoFile)
