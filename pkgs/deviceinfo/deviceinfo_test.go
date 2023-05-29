@@ -58,7 +58,7 @@ func TestUnmarshal(t *testing.T) {
 	var d DeviceInfo
 	for _, table := range tables {
 		testName := fmt.Sprintf("unmarshal::'%s':", strings.ReplaceAll(table.in, "\n", "\\n"))
-		if err := unmarshal(strings.NewReader(table.in), &d); err != nil {
+		if err := d.unmarshal(strings.NewReader(table.in)); err != nil {
 			t.Errorf("%s received an unexpected err: ", err)
 		}
 

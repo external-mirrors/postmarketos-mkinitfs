@@ -11,6 +11,8 @@ import (
 	"os"
 	"reflect"
 	"strings"
+
+	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/misc"
 )
 
 type DeviceInfo struct {
@@ -21,24 +23,31 @@ type DeviceInfo struct {
 	UbootBoardname         string
 }
 
-func ReadDeviceinfo(file string) (DeviceInfo, error) {
-	var deviceinfo DeviceInfo
+// Reads the relevant entries from "file" into DeviceInfo struct
+// Any already-set entries will be overwriten if they are present
+// in "file"
+func (d *DeviceInfo) ReadDeviceinfo(file string) error {
+	if exists, err := misc.Exists(file); !exists {
+		return fmt.Errorf("%q not found, required by mkinitfs", file)
+	} else if err != nil {
+		return fmt.Errorf("unexpected error getting status for %q: %s", file, err)
+	}
 
 	fd, err := os.Open(file)
 	if err != nil {
-		return deviceinfo, err
+		return err
 	}
 	defer fd.Close()
 
-	if err := unmarshal(fd, &deviceinfo); err != nil {
-		return deviceinfo, err
+	if err := d.unmarshal(fd); err != nil {
+		return err
 	}
 
-	return deviceinfo, nil
+	return nil
 }
 
 // Unmarshals a deviceinfo into a DeviceInfo struct
-func unmarshal(r io.Reader, devinfo *DeviceInfo) error {
+func (d *DeviceInfo) unmarshal(r io.Reader) error {
 	s := bufio.NewScanner(r)
 	for s.Scan() {
 		line := s.Text()
@@ -74,7 +83,7 @@ func unmarshal(r io.Reader, devinfo *DeviceInfo) error {
 			return fmt.Errorf("error parsing deviceinfo line, invalid format: %s", line)
 		}
 
-		field := reflect.ValueOf(devinfo).Elem().FieldByName(fieldName)
+		field := reflect.ValueOf(d).Elem().FieldByName(fieldName)
 		if !field.IsValid() {
 			// an option that meets the deviceinfo "specification", but isn't
 			// one we care about in this module
