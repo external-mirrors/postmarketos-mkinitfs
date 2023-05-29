@@ -50,8 +50,12 @@ func main() {
 	log.Default().SetFlags(log.Lmicroseconds)
 
 	var devinfo deviceinfo.DeviceInfo
-	if err := devinfo.ReadDeviceinfo("/etc/deviceinfo"); err != nil {
-		log.Println("Error reading deviceinfo:", err)
+	deverr_usr := devinfo.ReadDeviceinfo("/usr/share/deviceinfo/deviceinfo")
+	deverr_etc := devinfo.ReadDeviceinfo("/etc/deviceinfo")
+	if deverr_etc != nil && deverr_usr != nil {
+		log.Println("Error reading deviceinfo")
+		log.Println("\t/usr/share/deviceinfo/deviceinfo:", deverr_usr)
+		log.Println("\t/etc/deviceinfo:", deverr_etc)
 		retCode = 1
 		return
 	}

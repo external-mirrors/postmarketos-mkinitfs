@@ -38,7 +38,8 @@ Design goals of this project are:
 The canonical deviceinfo "specification" is at
 https://wiki.postmarketos.org/wiki/Deviceinfo_reference
 
-mkinitfs reads deviceinfo values from */etc/deviceinfo*. The following variables
+mkinitfs reads deviceinfo values from */usr/share/deviceinfo/deviceinfo* and
+*/etc/deviceinfo*, in that order. The following variables
 are *required* by mkinitfs:
 
 	- deviceinfo_initfs_compression
@@ -63,7 +64,7 @@ it are for constructing the initramfs archive.
 
 Configuration under */usr/share/mkinitfs* is intended to be managed by
 distributions, while configuration under */etc/mkinitfs* is for users to
-create/manage. mkinitfs reads configuration from */usr/share/mkinitfs* first, and then from */etc/mkinitfs*. 
+create/manage. mkinitfs reads configuration from */usr/share/mkinitfs* first, and then from */etc/mkinitfs*.
 
 ## /usr/share/mkinitfs/files, /etc/mkinitfs/files
 ## /usr/share/mkinitfs/files-extra, /etc/mkinitfs/files-extra
@@ -136,7 +137,7 @@ search for the app. The following commandline options are passed to it:
 		Currently this is hardcoded to be "initramfs"
 
 	*-k* <kernel filename>
-	
+
 	*-d* <work directory>
 
 		Path to the directory containing the build artifacts from mkinitfs.
