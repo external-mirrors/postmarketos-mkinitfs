@@ -10,6 +10,32 @@ import (
 	"testing"
 )
 
+// Test ReadDeviceinfo and the logic of reading from multiple files
+func TestReadDeviceinfo(t *testing.T) {
+	modules_expected := "panfrost foo bar bazz"
+	mesa_expected := "msm"
+
+	var devinfo DeviceInfo
+	err := devinfo.ReadDeviceinfo("./test_resources/deviceinfo-missing")
+	if !strings.Contains(err.Error(), "required by mkinitfs") {
+		t.Errorf("received an unexpected err: %s", err)
+	}
+	err = devinfo.ReadDeviceinfo("./test_resources/deviceinfo-first")
+	if err != nil {
+		t.Errorf("received an unexpected err: %s", err)
+	}
+	err = devinfo.ReadDeviceinfo("./test_resources/deviceinfo-msm")
+	if err != nil {
+		t.Errorf("received an unexpected err: %s", err)
+	}
+	if devinfo.ModulesInitfs != modules_expected {
+		t.Errorf("expected %q, got: %q", modules_expected, devinfo.ModulesInitfs)
+	}
+	if devinfo.MesaDriver != mesa_expected {
+		t.Errorf("expected %q, got: %q", mesa_expected, devinfo.MesaDriver)
+	}
+}
+
 // Test conversion of name to DeviceInfo struct field format
 func TestNameToField(t *testing.T) {
 	tables := []struct {
