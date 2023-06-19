@@ -17,14 +17,11 @@ import (
 
 type Modules struct {
 	modulesListPath string
-	modulesList     []string
 }
 
-// New returns a new Modules that will use the given moduleto provide a list
-// of script files.
-func New(modulesList []string, modulesListPath string) *Modules {
+// New returns a new Modules that will read in lists of kernel modules in the given path.
+func New(modulesListPath string) *Modules {
 	return &Modules{
-		modulesList:     modulesList,
 		modulesListPath: modulesListPath,
 	}
 }
@@ -50,20 +47,6 @@ func (m *Modules) List() (*filelist.FileList, error) {
 	modprobeFiles, _ := filepath.Glob(filepath.Join(modDir, "modules.*"))
 	for _, file := range modprobeFiles {
 		files.Add(file, file)
-	}
-
-	// slurp up given list of modules
-	if len(m.modulesList) > 0 {
-		log.Printf("-- Including kernel modules from deviceinfo")
-		for _, module := range m.modulesList {
-			if modFilelist, err := getModule(module, modDir); err != nil {
-				return nil, fmt.Errorf("unable to get modules from deviceinfo: %w", err)
-			} else {
-				for _, file := range modFilelist {
-					files.Add(file, file)
-				}
-			}
-		}
 	}
 
 	// slurp up modules from lists in modulesListPath

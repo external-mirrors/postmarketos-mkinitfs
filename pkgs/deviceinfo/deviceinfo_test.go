@@ -12,7 +12,7 @@ import (
 
 // Test ReadDeviceinfo and the logic of reading from multiple files
 func TestReadDeviceinfo(t *testing.T) {
-	modules_expected := "panfrost foo bar bazz"
+	compression_expected := "gz -9"
 	mesa_expected := "msm"
 
 	var devinfo DeviceInfo
@@ -28,8 +28,8 @@ func TestReadDeviceinfo(t *testing.T) {
 	if err != nil {
 		t.Errorf("received an unexpected err: %s", err)
 	}
-	if devinfo.ModulesInitfs != modules_expected {
-		t.Errorf("expected %q, got: %q", modules_expected, devinfo.ModulesInitfs)
+	if devinfo.InitfsCompression != compression_expected {
+		t.Errorf("expected %q, got: %q", compression_expected, devinfo.InitfsCompression)
 	}
 	if devinfo.MesaDriver != mesa_expected {
 		t.Errorf("expected %q, got: %q", mesa_expected, devinfo.MesaDriver)
@@ -44,9 +44,9 @@ func TestNameToField(t *testing.T) {
 	}{
 		{"deviceinfo_dtb", "Dtb"},
 		{"dtb", "Dtb"},
-		{"deviceinfo_modules_initfs", "ModulesInitfs"},
+		{"deviceinfo_initfs_compression", "InitfsCompression"},
 		{"modules_initfs", "ModulesInitfs"},
-		{"deviceinfo_modules_initfs___", "ModulesInitfs"},
+		{"deviceinfo_initfs_compression___", "InitfsCompression"},
 		{"deviceinfo_initfs_extra_compression", "InitfsExtraCompression"},
 	}
 
@@ -67,12 +67,11 @@ func TestUnmarshal(t *testing.T) {
 		in       string
 		expected string
 	}{
-		{"ModulesInitfs", "deviceinfo_modules_initfs=\"panfrost foo bar bazz\"\n", "panfrost foo bar bazz"},
-		{"ModulesInitfs", "deviceinfo_modules_initfs=\"panfrost foo bar bazz\"", "panfrost foo bar bazz"},
+		{"InitfsCompression", "deviceinfo_initfs_compression=\"gzip:-9\"\n", "gzip:-9"},
 		// line with multiple '='
 		{"InitfsCompression", "deviceinfo_initfs_compression=zstd:--foo=1 -T0 --bar=bazz", "zstd:--foo=1 -T0 --bar=bazz"},
 		// empty option
-		{"ModulesInitfs", "deviceinfo_modules_initfs=\"\"\n", ""},
+		{"InitfsCompression", "deviceinfo_initfs_compression=\"\"\n", ""},
 		// line with comment at the end
 		{"MesaDriver", "deviceinfo_mesa_driver=\"panfrost\"  # this is a nice driver", "panfrost"},
 		{"", "# this is a comment!\n", ""},

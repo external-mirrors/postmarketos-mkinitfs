@@ -1,2 +1,2 @@
-deviceinfo_modules_initfs="panfrost foo bar bazz"
+deviceinfo_initfs_compression="gz -9"
 deviceinfo_mesa_driver="panfrost"

@@ -19,7 +19,6 @@ type DeviceInfo struct {
 	InitfsCompression      string
 	InitfsExtraCompression string
 	MesaDriver             string
-	ModulesInitfs          string
 	UbootBoardname         string
 }
 

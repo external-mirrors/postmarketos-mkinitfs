@@ -9,7 +9,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/archive"
@@ -105,8 +104,8 @@ func main() {
 		hookfiles.New("/etc/mkinitfs/files"),
 		hookscripts.New("/usr/share/mkinitfs/hooks", "/hooks"),
 		hookscripts.New("/etc/mkinitfs/hooks", "/hooks"),
-		modules.New(strings.Fields(devinfo.ModulesInitfs), "/usr/share/mkinitfs/modules"),
-		modules.New([]string{}, "/etc/mkinitfs/modules"),
+		modules.New("/usr/share/mkinitfs/modules"),
+		modules.New("/etc/mkinitfs/modules"),
 	})
 	if err := initramfsAr.AddItems(initfs); err != nil {
 		log.Println(err)
@@ -137,8 +136,8 @@ func main() {
 		hookfiles.New("/etc/mkinitfs/files-extra"),
 		hookscripts.New("/usr/share/mkinitfs/hooks-extra", "/hooks-extra"),
 		hookscripts.New("/etc/mkinitfs/hooks-extra", "/hooks-extra"),
-		modules.New([]string{}, "/usr/share/mkinitfs/modules-extra"),
-		modules.New([]string{}, "/etc/mkinitfs/modules-extra"),
+		modules.New("/usr/share/mkinitfs/modules-extra"),
+		modules.New("/etc/mkinitfs/modules-extra"),
 		osksdl.New(devinfo.MesaDriver),
 	})
 	if err := initramfsExtraAr.AddItemsExclude(initfsExtra, initfs); err != nil {
