@@ -418,19 +418,19 @@ func (archive *Archive) writeCpio() error {
 			if header.Mode.IsRegular() {
 				fd, err := os.Open(source)
 				if err != nil {
-					return fmt.Errorf("archive.writeCpio: uname to open file %q, %w", source, err)
+					return fmt.Errorf("archive.writeCpio: Unable to open file %q, %w", source, err)
 				}
 				defer fd.Close()
 				if _, err := io.Copy(archive.cpioWriter, fd); err != nil {
-					return fmt.Errorf("archive.writeCpio: unable to write out archive: %w", err)
+					return fmt.Errorf("archive.writeCpio: Couldn't process %q: %w", source, err)
 				}
 			} else if header.Linkname != "" {
 				// the contents of a symlink is just need the link name
 				if _, err := archive.cpioWriter.Write([]byte(header.Linkname)); err != nil {
-					return fmt.Errorf("archive.writeCpio: unable to write out symlink: %w", err)
+					return fmt.Errorf("archive.writeCpio: unable to write out symlink: %q -> %q: %w", source, header.Linkname, err)
 				}
 			} else {
-				return fmt.Errorf("archive.writeCpio: unknown type for file: %s", source)
+				return fmt.Errorf("archive.writeCpio: unknown type for file: %q: %d", source, header.Mode)
 			}
 		}
 
