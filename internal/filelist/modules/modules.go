@@ -33,8 +33,14 @@ func (m *Modules) List() (*filelist.FileList, error) {
 	}
 
 	files := filelist.NewFileList()
+	libDir := "/usr/lib/modules"
+	if exists, err := misc.Exists(libDir); !exists {
+		libDir = "/lib/modules"
+	} else if err != nil {
+		return nil, fmt.Errorf("received unexpected error when getting status for %q: %w", libDir, err)
+	}
 
-	modDir := filepath.Join("/lib/modules", kernVer)
+	modDir := filepath.Join(libDir, kernVer)
 	if exists, err := misc.Exists(modDir); !exists {
 		// dir /lib/modules/<kernel> if kernel built without module support, so just print a message
 		log.Printf("-- kernel module directory not found: %q, not including modules", modDir)
