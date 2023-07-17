@@ -248,11 +248,56 @@ func (archive *Archive) AddItem(source string, dest string) error {
 		return fmt.Errorf("AddItem: failed to get stat for %q: %w", source, err)
 	}
 
+	// A symlink to a directory doesn't have the os.ModeDir bit set, so we need
+	// to check if it's a symlink first
+	if sourceStat.Mode()&os.ModeSymlink != 0 {
+		return archive.addSymlink(source, dest)
+	}
+
 	if sourceStat.Mode()&os.ModeDir != 0 {
 		return archive.addDir(dest)
 	}
 
 	return archive.addFile(source, dest)
+}
+
+func (archive *Archive) addSymlink(source string, dest string) error {
+	target, err := os.Readlink(source)
+	if err != nil {
+		log.Print("addSymlink: failed to get symlink target for: ", source)
+		return err
+	}
+
+	// Make sure we pick up the symlink target too
+	targetAbs := target
+	if filepath.Dir(target) == "." {
+		// relative symlink, make it absolute so we can add the target to the archive
+		targetAbs = filepath.Join(filepath.Dir(source), target)
+	}
+
+	if !filepath.IsAbs(targetAbs) {
+		targetAbs, err = osutil.RelativeSymlinkTargetToDir(targetAbs, filepath.Dir(source))
+		if err != nil {
+			return err
+		}
+	}
+
+	archive.AddItem(targetAbs, targetAbs)
+
+	// Now add the symlink itself
+	destFilename := strings.TrimPrefix(dest, "/")
+
+	archive.items.add(archiveItem{
+		sourcePath: source,
+		header: &cpio.Header{
+			Name:     destFilename,
+			Linkname: target,
+			Mode:     0644 | cpio.ModeSymlink,
+			Size:     int64(len(target)),
+		},
+	})
+
+	return nil
 }
 
 func (archive *Archive) addFile(source string, dest string) error {
@@ -263,42 +308,6 @@ func (archive *Archive) addFile(source string, dest string) error {
 	sourceStat, err := os.Lstat(source)
 	if err != nil {
 		log.Print("addFile: failed to stat file: ", source)
-		return err
-	}
-
-	// Symlink: write symlink to archive then set 'file' to link target
-	if sourceStat.Mode()&os.ModeSymlink != 0 {
-		// log.Printf("File %q is a symlink", file)
-		target, err := os.Readlink(source)
-		if err != nil {
-			log.Print("addFile: failed to get symlink target: ", source)
-			return err
-		}
-
-		destFilename := strings.TrimPrefix(dest, "/")
-
-		archive.items.add(archiveItem{
-			sourcePath: source,
-			header: &cpio.Header{
-				Name:     destFilename,
-				Linkname: target,
-				Mode:     0644 | cpio.ModeSymlink,
-				Size:     int64(len(target)),
-				// Checksum: 1,
-			},
-		})
-
-		if filepath.Dir(target) == "." {
-			target = filepath.Join(filepath.Dir(source), target)
-		}
-		// make sure target is an absolute path
-		if !filepath.IsAbs(target) {
-			target, err = osutil.RelativeSymlinkTargetToDir(target, filepath.Dir(source))
-			if err != nil {
-				return err
-			}
-		}
-		err = archive.addFile(target, target)
 		return err
 	}
 
