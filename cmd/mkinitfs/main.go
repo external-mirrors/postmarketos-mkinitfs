@@ -80,8 +80,8 @@ func main() {
 	defer func() {
 		e := os.RemoveAll(workDir)
 		if e != nil && err == nil {
-			err = e
-			retCode = 1
+			log.Println(e)
+			log.Println("unable to remove temporary work directory")
 		}
 	}()
 
