@@ -100,6 +100,9 @@ create/manage. mkinitfs reads configuration from */usr/share/mkinitfs* first, an
 	path(s) under the relevant directory in */etc/mkinitfs*, and changing
 	the destination path.
 
+	Any lines in these files that start with *#* are considered comments, and
+	skipped.
+
 ## /usr/share/mkinitfs/hooks, /etc/mkinitfs/hooks
 ## /usr/share/mkinitfs/hooks-extra*, /etc/mkinitfs/hooks-extra
 
@@ -121,11 +124,17 @@ create/manage. mkinitfs reads configuration from */usr/share/mkinitfs* first, an
 	Modules are installed in the initramfs archive under the same path they
 	exist on the system where mkinitfs is executed.
 
+	Any lines in these files that start with *#* are considered comments, and
+	skipped.
+
 ## /usr/share/mkinitfs/dirs, /etc/mkinitfs/dirs
 
 	Files with the *.dirs* extension in these directories are lists of
 	directories to create within the initramfs. There is no *-extra* variant,
 	since directories are of negligible size.
+
+	Any lines in these files that start with *#* are considered comments, and
+	skipped.
 
 # BOOT-DEPLOY
 

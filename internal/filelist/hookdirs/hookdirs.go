@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/filelist"
 )
@@ -44,7 +45,7 @@ func (h *HookDirs) List() (*filelist.FileList, error) {
 		s := bufio.NewScanner(f)
 		for s.Scan() {
 			dir := s.Text()
-			if len(dir) == 0 {
+			if len(dir) == 0 || strings.HasPrefix(dir, "#") {
 				continue
 			}
 
