@@ -108,7 +108,12 @@ func main() {
 		modules.New(strings.Fields(devinfo.ModulesInitfs), "/usr/share/mkinitfs/modules"),
 		modules.New([]string{}, "/etc/mkinitfs/modules"),
 	})
-	initramfsAr.AddItems(initfs)
+	if err := initramfsAr.AddItems(initfs); err != nil {
+		log.Println(err)
+		log.Println("failed to generate: ", "initramfs")
+		retCode = 1
+		return
+	}
 	if err := initramfsAr.Write(filepath.Join(workDir, "initramfs"), os.FileMode(0644)); err != nil {
 		log.Println(err)
 		log.Println("failed to generate: ", "initramfs")
@@ -136,7 +141,12 @@ func main() {
 		modules.New([]string{}, "/etc/mkinitfs/modules-extra"),
 		osksdl.New(devinfo.MesaDriver),
 	})
-	initramfsExtraAr.AddItemsExclude(initfsExtra, initfs)
+	if err := initramfsExtraAr.AddItemsExclude(initfsExtra, initfs); err != nil {
+		log.Println(err)
+		log.Println("failed to generate: ", "initramfs-extra")
+		retCode = 1
+		return
+	}
 	if err := initramfsExtraAr.Write(filepath.Join(workDir, "initramfs-extra"), os.FileMode(0644)); err != nil {
 		log.Println(err)
 		log.Println("failed to generate: ", "initramfs-extra")
