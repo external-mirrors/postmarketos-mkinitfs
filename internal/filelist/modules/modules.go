@@ -95,6 +95,10 @@ func slurpModules(fd io.Reader, modDir string) (*filelist.FileList, error) {
 	s := bufio.NewScanner(fd)
 	for s.Scan() {
 		line := s.Text()
+		if len(line) == 0 {
+			continue
+		}
+
 		dir, file := filepath.Split(line)
 		if file == "" {
 			// item is a directory
@@ -194,7 +198,12 @@ func getModuleDeps(modName string, modulesDep io.Reader) ([]string, error) {
 
 	s := bufio.NewScanner(modulesDep)
 	for s.Scan() {
-		fields := strings.Fields(s.Text())
+		line := s.Text()
+		if len(line) == 0 {
+			continue
+		}
+
+		fields := strings.Fields(line)
 		if len(fields) == 0 {
 			continue
 		}

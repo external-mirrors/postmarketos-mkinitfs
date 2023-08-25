@@ -44,6 +44,10 @@ func (h *HookDirs) List() (*filelist.FileList, error) {
 		s := bufio.NewScanner(f)
 		for s.Scan() {
 			dir := s.Text()
+			if len(dir) == 0 {
+				continue
+			}
+
 			files.Add(dir, dir)
 		}
 	}

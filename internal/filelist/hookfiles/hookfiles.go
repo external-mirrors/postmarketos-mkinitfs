@@ -58,7 +58,12 @@ func slurpFiles(fd io.Reader) (*filelist.FileList, error) {
 
 	s := bufio.NewScanner(fd)
 	for s.Scan() {
-		src, dest, has_dest := strings.Cut(s.Text(), ":")
+		line := s.Text()
+		if len(line) == 0 {
+			continue
+		}
+
+		src, dest, has_dest := strings.Cut(line, ":")
 
 		fFiles, err := misc.GetFiles([]string{src}, true)
 		if err != nil {
