@@ -37,6 +37,12 @@ func (s *OskSdl) List() (*filelist.FileList, error) {
 
 	log.Println("- Including osk-sdl support")
 
+	log.Println("******************* DEPRECATION WARNING *******************")
+	log.Println("Using osk-sdl is deprecated in postmarketOS!")
+	log.Println("Consider switching to unl0kr:")
+	log.Println("https://postmarketos.org/edge/2023/10/04/osk-sdl-deprecated/")
+	log.Println("******************* DEPRECATION WARNING *******************")
+
 	confFiles := []string{
 		"/etc/osk.conf",
 		"/etc/ts.conf",
