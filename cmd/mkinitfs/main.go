@@ -19,7 +19,6 @@ import (
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/filelist/hookscripts"
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/filelist/initramfs"
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/filelist/modules"
-	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/filelist/osksdl"
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/misc"
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/osutil"
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/pkgs/deviceinfo"
@@ -138,7 +137,6 @@ func main() {
 		hookscripts.New("/etc/mkinitfs/hooks-extra", "/hooks-extra"),
 		modules.New("/usr/share/mkinitfs/modules-extra"),
 		modules.New("/etc/mkinitfs/modules-extra"),
-		osksdl.New(devinfo.MesaDriver),
 	})
 	if err := initramfsExtraAr.AddItemsExclude(initfsExtra, initfs); err != nil {
 		log.Println(err)
