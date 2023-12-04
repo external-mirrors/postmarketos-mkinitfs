@@ -154,7 +154,7 @@ func main() {
 
 	// Final processing of initramfs / kernel is done by boot-deploy
 	if !disableBootDeploy {
-		if err := bootDeploy(workDir, *outDir, devinfo.UbootBoardname); err != nil {
+		if err := bootDeploy(workDir, *outDir, devinfo); err != nil {
 			log.Println(err)
 			log.Println("boot-deploy failed")
 			retCode = 1
@@ -163,10 +163,10 @@ func main() {
 	}
 }
 
-func bootDeploy(workDir, outDir, ubootBoardname string) error {
+func bootDeploy(workDir string, outDir string, devinfo deviceinfo.DeviceInfo) error {
 	log.Print("== Using boot-deploy to finalize/install files ==")
 	defer misc.TimeFunc(time.Now(), "boot-deploy")
 
-	bd := bootdeploy.New(workDir, outDir, ubootBoardname)
+	bd := bootdeploy.New(workDir, outDir, devinfo)
 	return bd.Run()
 }
