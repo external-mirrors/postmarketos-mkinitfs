@@ -19,6 +19,7 @@ type DeviceInfo struct {
 	InitfsCompression      string
 	InitfsExtraCompression string
 	UbootBoardname         string
+	GenerateSystemdBoot    string
 }
 
 // Reads the relevant entries from "file" into DeviceInfo struct
