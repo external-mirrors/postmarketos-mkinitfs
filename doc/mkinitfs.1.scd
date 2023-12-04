@@ -44,7 +44,6 @@ are *required* by mkinitfs:
 
 	- deviceinfo_initfs_compression
 	- deviceinfo_initfs_extra_compression
-	- deviceinfo_mesa_driver
 	- deviceinfo_uboot_boardname
 
 It is a design goal to keep the number of required variables from deviceinfo to
