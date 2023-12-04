@@ -18,7 +18,6 @@ import (
 type DeviceInfo struct {
 	InitfsCompression      string
 	InitfsExtraCompression string
-	MesaDriver             string
 	UbootBoardname         string
 }
 

@@ -13,7 +13,6 @@ import (
 // Test ReadDeviceinfo and the logic of reading from multiple files
 func TestReadDeviceinfo(t *testing.T) {
 	compression_expected := "gz -9"
-	mesa_expected := "msm"
 
 	var devinfo DeviceInfo
 	err := devinfo.ReadDeviceinfo("./test_resources/deviceinfo-missing")
@@ -30,9 +29,6 @@ func TestReadDeviceinfo(t *testing.T) {
 	}
 	if devinfo.InitfsCompression != compression_expected {
 		t.Errorf("expected %q, got: %q", compression_expected, devinfo.InitfsCompression)
-	}
-	if devinfo.MesaDriver != mesa_expected {
-		t.Errorf("expected %q, got: %q", mesa_expected, devinfo.MesaDriver)
 	}
 }
 
@@ -73,7 +69,6 @@ func TestUnmarshal(t *testing.T) {
 		// empty option
 		{"InitfsCompression", "deviceinfo_initfs_compression=\"\"\n", ""},
 		// line with comment at the end
-		{"MesaDriver", "deviceinfo_mesa_driver=\"panfrost\"  # this is a nice driver", "panfrost"},
 		{"", "# this is a comment!\n", ""},
 		// empty lines are fine
 		{"", "", ""},
