@@ -118,7 +118,9 @@ func getModulesInDir(modPath string) (files []string, err error) {
 			// Unable to walk path
 			return err
 		}
-		if filepath.Ext(path) != ".ko" && filepath.Ext(path) != ".xz" {
+		// this assumes module names are in the format <name>.ko[.format],
+		// where ".format" (e.g. ".gz") is optional.
+		if !strings.Contains(".ko", path) {
 			return nil
 		}
 		files = append(files, path)
