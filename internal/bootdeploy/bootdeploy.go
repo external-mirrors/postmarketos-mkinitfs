@@ -95,13 +95,16 @@ func (b *BootDeploy) Run() error {
 }
 
 func getKernelPath(outDir string, zboot bool) ([]string, error) {
-	kernFile := "vmlinuz*"
-
+	var kernels []string
 	if zboot {
-		kernFile = "linux.efi"
+		kernels, _ = filepath.Glob(filepath.Join(outDir, "linux.efi"))
+		if len(kernels) > 0 {
+			return kernels, nil
+		}
+		// else fallback to vmlinuz* below
 	}
 
-	var kernels []string
+	kernFile := "vmlinuz*"
 	kernels, _ = filepath.Glob(filepath.Join(outDir, kernFile))
 	if len(kernels) == 0 {
 		return nil, errors.New("Unable to find any kernels at " + filepath.Join(outDir, kernFile))
