@@ -41,10 +41,22 @@ func getFile(file string, required bool) (files []string, err error) {
 
 	fileInfo, err := os.Stat(file)
 	if err != nil {
-		if required {
-			return files, fmt.Errorf("getFile: failed to stat file %q: %w", file, err)
+		// Check if there is a Zstd-compressed version of the file
+		fileZstd := file + ".zst" // .zst is the extension used by linux-firmware
+		fileInfoZstd, errZstd := os.Stat(fileZstd)
+
+		if errZstd == nil {
+			file = fileZstd
+			fileInfo = fileInfoZstd
+			// Unset nil so we don't retain the error from the os.Stat call for the uncompressed version.
+			err = nil
+		} else {
+			if required {
+				return files, fmt.Errorf("getFile: failed to stat file %q: %w (also tried %q: %w)", file, err, fileZstd, errZstd)
+			}
+
+			return files, nil
 		}
-		return files, nil
 	}
 
 	if fileInfo.IsDir() {
