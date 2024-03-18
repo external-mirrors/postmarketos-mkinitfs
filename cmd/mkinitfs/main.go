@@ -106,30 +106,6 @@ func main() {
 		modules.New("/usr/share/mkinitfs/modules"),
 		modules.New("/etc/mkinitfs/modules"),
 	})
-	if err := initramfsAr.AddItems(initfs); err != nil {
-		log.Println(err)
-		log.Println("failed to generate: ", "initramfs")
-		retCode = 1
-		return
-	}
-	if err := initramfsAr.Write(filepath.Join(workDir, "initramfs"), os.FileMode(0644)); err != nil {
-		log.Println(err)
-		log.Println("failed to generate: ", "initramfs")
-		retCode = 1
-		return
-	}
-	misc.TimeFunc(start, "initramfs")
-
-	//
-	// initramfs-extra
-	//
-	// deviceinfo.InitfsExtraCompression needs a little more post-processing
-	compressionFormat, compressionLevel = archive.ExtractFormatLevel(devinfo.InitfsExtraCompression)
-	log.Printf("== Generating %s ==\n", "initramfs-extra")
-	log.Printf("- Using compression format %s with level %q\n", compressionFormat, compressionLevel)
-
-	start = time.Now()
-	initramfsExtraAr := archive.New(compressionFormat, compressionLevel)
 	initfsExtra := initramfs.New([]filelist.FileLister{
 		hookfiles.New("/usr/share/mkinitfs/files-extra"),
 		hookfiles.New("/etc/mkinitfs/files-extra"),
@@ -138,19 +114,58 @@ func main() {
 		modules.New("/usr/share/mkinitfs/modules-extra"),
 		modules.New("/etc/mkinitfs/modules-extra"),
 	})
-	if err := initramfsExtraAr.AddItemsExclude(initfsExtra, initfs); err != nil {
+
+	if err := initramfsAr.AddItems(initfs); err != nil {
 		log.Println(err)
-		log.Println("failed to generate: ", "initramfs-extra")
+		log.Println("failed to generate: ", "initramfs")
 		retCode = 1
 		return
 	}
-	if err := initramfsExtraAr.Write(filepath.Join(workDir, "initramfs-extra"), os.FileMode(0644)); err != nil {
+
+	// Include initramfs-extra files in the initramfs if not making a separate
+	// archive
+	if !devinfo.CreateInitfsExtra {
+		if err := initramfsAr.AddItems(initfsExtra); err != nil {
+			log.Println(err)
+			log.Println("failed to generate: ", "initramfs")
+			retCode = 1
+			return
+		}
+	}
+
+	if err := initramfsAr.Write(filepath.Join(workDir, "initramfs"), os.FileMode(0644)); err != nil {
 		log.Println(err)
-		log.Println("failed to generate: ", "initramfs-extra")
+		log.Println("failed to generate: ", "initramfs")
 		retCode = 1
 		return
 	}
-	misc.TimeFunc(start, "initramfs-extra")
+	misc.TimeFunc(start, "initramfs")
+
+	if devinfo.CreateInitfsExtra {
+		//
+		// initramfs-extra
+		//
+		// deviceinfo.InitfsExtraCompression needs a little more post-processing
+		compressionFormat, compressionLevel = archive.ExtractFormatLevel(devinfo.InitfsExtraCompression)
+		log.Printf("== Generating %s ==\n", "initramfs-extra")
+		log.Printf("- Using compression format %s with level %q\n", compressionFormat, compressionLevel)
+
+		start = time.Now()
+		initramfsExtraAr := archive.New(compressionFormat, compressionLevel)
+		if err := initramfsExtraAr.AddItemsExclude(initfsExtra, initfs); err != nil {
+			log.Println(err)
+			log.Println("failed to generate: ", "initramfs-extra")
+			retCode = 1
+			return
+		}
+		if err := initramfsExtraAr.Write(filepath.Join(workDir, "initramfs-extra"), os.FileMode(0644)); err != nil {
+			log.Println(err)
+			log.Println("failed to generate: ", "initramfs-extra")
+			retCode = 1
+			return
+		}
+		misc.TimeFunc(start, "initramfs-extra")
+	}
 
 	// Final processing of initramfs / kernel is done by boot-deploy
 	if !disableBootDeploy {

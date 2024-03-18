@@ -42,6 +42,7 @@ func TestNameToField(t *testing.T) {
 		{"modules_initfs", "ModulesInitfs"},
 		{"deviceinfo_initfs_compression___", "InitfsCompression"},
 		{"deviceinfo_initfs_extra_compression", "InitfsExtraCompression"},
+		{"deviceinfo_create_initfs_extra", "CreateInitfsExtra"},
 	}
 
 	for _, table := range tables {
@@ -65,6 +66,7 @@ func TestUnmarshal(t *testing.T) {
 			UbootBoardname:         "foobar-bazz",
 			InitfsCompression:      "zstd:--foo=1 -T0 --bar=bazz",
 			InitfsExtraCompression: "",
+			CreateInitfsExtra:      true,
 		},
 		},
 	}

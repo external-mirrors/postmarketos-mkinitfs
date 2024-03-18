@@ -4,3 +4,4 @@ deviceinfo_uboot_boardname="foobar-bazz"
 deviceinfo_initfs_compression="zstd:--foo=1 -T0 --bar=bazz"
 # empty option
 deviceinfo_initfs_extra_compression=""
+deviceinfo_create_initfs_extra="true"

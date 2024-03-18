@@ -21,6 +21,7 @@ type DeviceInfo struct {
 	UbootBoardname         string
 	GenerateSystemdBoot    string
 	FormatVersion          string
+	CreateInitfsExtra      bool
 }
 
 // Reads the relevant entries from "file" into DeviceInfo struct
@@ -112,6 +113,7 @@ func (d DeviceInfo) String() string {
 			%s: %v
 			%s: %v
 			%s: %v
+			%s: %v
 	}`,
 		"deviceinfo_format_version", d.FormatVersion,
 		"deviceinfo_", d.FormatVersion,
@@ -120,5 +122,6 @@ func (d DeviceInfo) String() string {
 		"deviceinfo_ubootBoardname", d.UbootBoardname,
 		"deviceinfo_generateSystemdBoot", d.GenerateSystemdBoot,
 		"deviceinfo_formatVersion", d.FormatVersion,
+		"deviceinfo_createInitfsExtra", d.CreateInitfsExtra,
 	)
 }

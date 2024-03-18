@@ -78,12 +78,17 @@ func (b *BootDeploy) Run() error {
 	}
 
 	// boot-deploy -i initramfs -k vmlinuz-postmarketos-rockchip -d /tmp/cpio -o /tmp/foo initramfs-extra
-	cmd := exec.Command("boot-deploy",
+	args := []string{
 		"-i", "initramfs",
 		"-k", kernFilename,
 		"-d", b.inDir,
 		"-o", b.outDir,
-		"initramfs-extra")
+	}
+
+	if b.devinfo.CreateInitfsExtra {
+		args = append(args, "initramfs-extra")
+	}
+	cmd := exec.Command("boot-deploy", args...)
 
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
