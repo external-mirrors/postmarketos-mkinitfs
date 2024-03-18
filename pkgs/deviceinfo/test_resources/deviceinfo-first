@@ -1,2 +1,3 @@
+deviceinfo_format_version="0"
 deviceinfo_initfs_compression="gz -9"
 deviceinfo_mesa_driver="panfrost"

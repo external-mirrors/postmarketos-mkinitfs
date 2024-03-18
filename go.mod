@@ -7,5 +7,13 @@ require (
 	github.com/klauspost/compress v1.15.12
 	github.com/pierrec/lz4/v4 v4.1.17
 	github.com/ulikunitz/xz v0.5.10
-	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c
+	golang.org/x/sys v0.18.0
+)
+
+require (
+	github.com/mvdan/sh v2.6.4+incompatible // indirect
+	golang.org/x/crypto v0.21.0 // indirect
+	golang.org/x/sync v0.6.0 // indirect
+	golang.org/x/term v0.18.0 // indirect
+	mvdan.cc/sh v2.6.4+incompatible // indirect
 )

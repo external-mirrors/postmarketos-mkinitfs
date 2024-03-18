@@ -1,0 +1,6 @@
+deviceinfo_format_version="0"
+deviceinfo_uboot_boardname="foobar-bazz"
+# line with multiple =
+deviceinfo_initfs_compression="zstd:--foo=1 -T0 --bar=bazz"
+# empty option
+deviceinfo_initfs_extra_compression=""

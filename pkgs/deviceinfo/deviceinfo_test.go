@@ -4,8 +4,6 @@
 package deviceinfo
 
 import (
-	"fmt"
-	"reflect"
 	"strings"
 	"testing"
 )
@@ -59,37 +57,24 @@ func TestUnmarshal(t *testing.T) {
 	tables := []struct {
 		// field is just used for reflection within the test, so it must be a
 		// valid DeviceInfo field
-		field    string
-		in       string
-		expected string
+		file     string
+		expected DeviceInfo
 	}{
-		{"InitfsCompression", "deviceinfo_initfs_compression=\"gzip:-9\"\n", "gzip:-9"},
-		// line with multiple '='
-		{"InitfsCompression", "deviceinfo_initfs_compression=zstd:--foo=1 -T0 --bar=bazz", "zstd:--foo=1 -T0 --bar=bazz"},
-		// empty option
-		{"InitfsCompression", "deviceinfo_initfs_compression=\"\"\n", ""},
-		// line with comment at the end
-		{"", "# this is a comment!\n", ""},
-		// empty lines are fine
-		{"", "", ""},
-		// line with whitepace characters only
-		{"", " \t \n\r", ""},
+		{"./test_resources/deviceinfo-unmarshal-1", DeviceInfo{
+			FormatVersion:          "0",
+			UbootBoardname:         "foobar-bazz",
+			InitfsCompression:      "zstd:--foo=1 -T0 --bar=bazz",
+			InitfsExtraCompression: "",
+		},
+		},
 	}
 	var d DeviceInfo
 	for _, table := range tables {
-		testName := fmt.Sprintf("unmarshal::'%s':", strings.ReplaceAll(table.in, "\n", "\\n"))
-		if err := d.unmarshal(strings.NewReader(table.in)); err != nil {
-			t.Errorf("%s received an unexpected err: ", err)
+		if err := d.unmarshal(table.file); err != nil {
+			t.Error(err)
 		}
-
-		// Check against expected value
-		field := reflect.ValueOf(&d).Elem().FieldByName(table.field)
-		out := ""
-		if table.field != "" {
-			out = field.String()
-		}
-		if out != table.expected {
-			t.Errorf("%s expected: %q, got: %q", testName, table.expected, out)
+		if d != table.expected {
+			t.Errorf("expected: %s, got: %s", table.expected, d)
 		}
 	}
 

@@ -4,14 +4,14 @@
 package deviceinfo
 
 import (
-	"bufio"
+	"context"
 	"fmt"
-	"io"
-	"log"
-	"os"
 	"reflect"
+	"strconv"
 	"strings"
+	"time"
 
+	"github.com/mvdan/sh/shell"
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/misc"
 )
 
@@ -20,6 +20,7 @@ type DeviceInfo struct {
 	InitfsExtraCompression string
 	UbootBoardname         string
 	GenerateSystemdBoot    string
+	FormatVersion          string
 }
 
 // Reads the relevant entries from "file" into DeviceInfo struct
@@ -32,13 +33,7 @@ func (d *DeviceInfo) ReadDeviceinfo(file string) error {
 		return fmt.Errorf("unexpected error getting status for %q: %s", file, err)
 	}
 
-	fd, err := os.Open(file)
-	if err != nil {
-		return err
-	}
-	defer fd.Close()
-
-	if err := d.unmarshal(fd); err != nil {
+	if err := d.unmarshal(file); err != nil {
 		return err
 	}
 
@@ -46,53 +41,44 @@ func (d *DeviceInfo) ReadDeviceinfo(file string) error {
 }
 
 // Unmarshals a deviceinfo into a DeviceInfo struct
-func (d *DeviceInfo) unmarshal(r io.Reader) error {
-	s := bufio.NewScanner(r)
-	for s.Scan() {
-		line := s.Text()
-		if strings.HasPrefix(line, "#") {
-			continue
-		}
+func (d *DeviceInfo) unmarshal(file string) error {
+	ctx, cancelCtx := context.WithDeadline(context.Background(), time.Now().Add(5*time.Second))
+	defer cancelCtx()
+	vars, err := shell.SourceFile(ctx, file)
+	if err != nil {
+		return fmt.Errorf("parsing deviceinfo %q failed: %w", file, err)
+	}
 
-		// line isn't setting anything, so just ignore it
-		if !strings.Contains(line, "=") {
-			continue
-		}
-
-		// sometimes line has a comment at the end after setting an option
-		line = strings.SplitN(line, "#", 2)[0]
-		line = strings.TrimSpace(line)
-
-		// must support having '=' in the value (e.g. kernel cmdline)
-		parts := strings.SplitN(line, "=", 2)
-		if len(parts) != 2 {
-			return fmt.Errorf("error parsing deviceinfo line, invalid format: %s", line)
-		}
-
-		name, val := parts[0], parts[1]
-		val = strings.ReplaceAll(val, "\"", "")
-
-		if name == "deviceinfo_format_version" && val != "0" {
-			return fmt.Errorf("deviceinfo format version %q is not supported", val)
-		}
-
-		fieldName := nameToField(name)
-
-		if fieldName == "" {
-			return fmt.Errorf("error parsing deviceinfo line, invalid format: %s", line)
-		}
-
+	for k, v := range vars {
+		fieldName := nameToField(k)
 		field := reflect.ValueOf(d).Elem().FieldByName(fieldName)
 		if !field.IsValid() {
 			// an option that meets the deviceinfo "specification", but isn't
 			// one we care about in this module
 			continue
 		}
-		field.SetString(val)
+		switch field.Interface().(type) {
+		case string:
+			field.SetString(v.String())
+		case bool:
+			if v, err := strconv.ParseBool(v.String()); err != nil {
+				return fmt.Errorf("deviceinfo %q has unsupported type for field %q, expected 'bool'", file, k)
+			} else {
+				field.SetBool(v)
+			}
+		case int:
+			if v, err := strconv.ParseInt(v.String(), 10, 32); err != nil {
+				return fmt.Errorf("deviceinfo %q has unsupported type for field %q, expected 'int'", file, k)
+			} else {
+				field.SetInt(v)
+			}
+		default:
+			return fmt.Errorf("deviceinfo %q has unsupported type for field %q", file, k)
+		}
 	}
-	if err := s.Err(); err != nil {
-		log.Print("unable to parse deviceinfo: ", err)
-		return err
+
+	if d.FormatVersion != "0" {
+		return fmt.Errorf("deviceinfo %q has an unsupported format version %q", file, d.FormatVersion)
 	}
 
 	return nil
@@ -125,8 +111,10 @@ func (d DeviceInfo) String() string {
 			%s: %v
 			%s: %v
 			%s: %v
+			%s: %v
 	}`,
 		"deviceinfo_format_version", d.FormatVersion,
+		"deviceinfo_", d.FormatVersion,
 		"deviceinfo_initfs_compression", d.InitfsCompression,
 		"deviceinfo_initfs_extra_compression", d.InitfsCompression,
 		"deviceinfo_ubootBoardname", d.UbootBoardname,
