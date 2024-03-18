@@ -54,6 +54,36 @@ a bare minimum, and to require only variables that don't hold lists of things.
 necessary tools to extract the configured archive format are in the initramfs
 archive.
 
+# ARCHIVE COMPRESSION
+
+Archive compression parameters are specified in the
+*deviceinfo_initfs_compression* and *deviceinfo_initfs_extra_compression*
+deviceinfo variables. Their values do not have to match, but special
+consideration should be taken since some formats may require additional kernel
+options or tools in the initramfs to support it.
+
+Supported compression *formats* for mkinitfs are:
+
+	- gzip
+	- lz4
+	- lzma
+	- none
+	- zstd
+
+Supported compression *levels* for mkinitfs:
+
+	- best
+	- default
+	- fast
+
+The value of these variables follows this syntax: *<format>:<level>*. For
+example, *zstd* with the *fast* compression level would be:
+*deviceinfo_initfs_compression="zstd:fast"*
+
+Defaults to *gzip* and *default* for both archives if format and/or level is
+unsupported or omitted.
+
+
 # DIRECTORIES
 
 The following directories are used by mkinitfs to generate the initramfs and
