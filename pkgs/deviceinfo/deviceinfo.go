@@ -116,3 +116,21 @@ func nameToField(name string) string {
 
 	return field
 }
+
+func (d DeviceInfo) String() string {
+	return fmt.Sprintf(`{
+			%s: %v
+			%s: %v
+			%s: %v
+			%s: %v
+			%s: %v
+			%s: %v
+	}`,
+		"deviceinfo_format_version", d.FormatVersion,
+		"deviceinfo_initfs_compression", d.InitfsCompression,
+		"deviceinfo_initfs_extra_compression", d.InitfsCompression,
+		"deviceinfo_ubootBoardname", d.UbootBoardname,
+		"deviceinfo_generateSystemdBoot", d.GenerateSystemdBoot,
+		"deviceinfo_formatVersion", d.FormatVersion,
+	)
+}
