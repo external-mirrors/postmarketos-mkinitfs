@@ -120,6 +120,7 @@ func getDeps(file string, parents map[string]struct{}) (files []string, err erro
 		"/usr/lib",
 		"/lib",
 		"/usr/lib/expect*",
+		"/usr/lib/systemd",
 	}
 
 	for _, lib := range libs {
