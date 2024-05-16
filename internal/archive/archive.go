@@ -237,7 +237,10 @@ func (archive *Archive) AddItemsExclude(flister filelist.FileLister, exclude fil
 
 // Adds the given file or directory at "source" to the archive at "dest"
 func (archive *Archive) AddItem(source string, dest string) error {
-
+	if osutil.HasMergedUsr() {
+		source = osutil.MergeUsr(source)
+		dest = osutil.MergeUsr(dest)
+	}
 	sourceStat, err := os.Lstat(source)
 	if err != nil {
 		e, ok := err.(*os.PathError)

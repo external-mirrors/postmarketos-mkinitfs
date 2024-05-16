@@ -27,6 +27,27 @@ func HasMergedUsr() bool {
 	return true
 }
 
+// Converts given path to one supported by a merged /usr config.
+// E.g., /bin/foo becomes /usr/bin/foo, /lib/bar becomes /usr/lib/bar
+// See: https://www.freedesktop.org/wiki/Software/systemd/TheCaseForTheUsrMerge
+func MergeUsr(file string) string {
+
+	// Prepend /usr to supported paths
+	for _, prefix := range []string{"/bin", "/sbin", "/lib", "/lib64"} {
+		if strings.HasPrefix(file, prefix) {
+			file = filepath.Join("/usr", file)
+			break
+		}
+	}
+
+	// Convert /usr/sbin --> /usr/bin
+	if part, found := strings.CutPrefix(file, "/usr/sbin"); found {
+		file = filepath.Join("/usr/bin/", part)
+	}
+
+	return file
+}
+
 // Converts a relative symlink target path (e.g. ../../lib/foo.so), that is
 // absolute path
 func RelativeSymlinkTargetToDir(symPath string, dir string) (string, error) {
