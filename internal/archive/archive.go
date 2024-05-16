@@ -413,6 +413,12 @@ func (archive *Archive) writeCompressed(path string, mode os.FileMode) (err erro
 }
 
 func (archive *Archive) writeCpio() error {
+	// Just in case
+	if osutil.HasMergedUsr() {
+		archive.addSymlink("/bin", "/bin")
+		archive.addSymlink("/sbin", "/sbin")
+		archive.addSymlink("/lib", "/lib")
+	}
 	// having a transient function for actually adding files to the archive
 	// allows the deferred fd.close to run after every copy and prevent having
 	// tons of open file handles until the copying is all done
