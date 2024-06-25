@@ -146,7 +146,7 @@ create/manage. mkinitfs reads configuration from */usr/share/mkinitfs* first, an
 ## /usr/share/mkinitfs/modules, /etc/mkinitfs/modules
 ## /usr/share/mkinitfs/modules-extra, /etc/mkinitfs/modules-extra
 
-	Files with the *.modules* extention in these directories are lists of
+	Files with the *.modules* extension in these directories are lists of
 	kernel modules to include in the initramfs. Individual modules and
 	directories can be listed in the files here. Globbing is also supported.
 
