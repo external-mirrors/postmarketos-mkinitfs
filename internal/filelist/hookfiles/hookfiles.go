@@ -59,7 +59,7 @@ func slurpFiles(fd io.Reader) (*filelist.FileList, error) {
 
 	s := bufio.NewScanner(fd)
 	for s.Scan() {
-		line := s.Text()
+		line := strings.TrimSpace(s.Text())
 		if len(line) == 0 || strings.HasPrefix(line, "#") {
 			continue
 		}

@@ -83,7 +83,7 @@ func slurpModules(fd io.Reader, modDir string) (*filelist.FileList, error) {
 	files := filelist.NewFileList()
 	s := bufio.NewScanner(fd)
 	for s.Scan() {
-		line := s.Text()
+		line := strings.TrimSpace(s.Text())
 		if len(line) == 0 || strings.HasPrefix(line, "#") {
 			continue
 		}
@@ -103,8 +103,8 @@ func slurpModules(fd io.Reader, modDir string) (*filelist.FileList, error) {
 			}
 		} else if dir == "" {
 			// item is a module name
-			if modFilelist, err := getModule(s.Text(), modDir); err != nil {
-				return nil, fmt.Errorf("unable to get module file %q: %w", s.Text(), err)
+			if modFilelist, err := getModule(line, modDir); err != nil {
+				return nil, fmt.Errorf("unable to get module file %q: %w", line, err)
 			} else {
 				for _, file := range modFilelist {
 					files.Add(file, file)
@@ -188,7 +188,7 @@ func getModuleDeps(modName string, modulesDep io.Reader) ([]string, error) {
 
 	s := bufio.NewScanner(modulesDep)
 	for s.Scan() {
-		line := s.Text()
+		line := strings.TrimSpace(s.Text())
 		if len(line) == 0 || strings.HasPrefix(line, "#") {
 			continue
 		}

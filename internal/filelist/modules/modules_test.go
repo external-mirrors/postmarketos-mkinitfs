@@ -18,6 +18,7 @@ func TestStripExts(t *testing.T) {
 		{"another_file", "another_file"},
 		{"a.b.c.d.e.f.g.h.i", "a"},
 		{"virtio_blk.ko", "virtio_blk"},
+		{"virtio_blk.ko ", "virtio_blk"},
 	}
 	for _, table := range tables {
 		out := stripExts(table.in)
