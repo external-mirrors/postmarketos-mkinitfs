@@ -9,6 +9,8 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"runtime/debug"
+	"strings"
 	"time"
 
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/archive"
@@ -26,8 +28,14 @@ import (
 
 // set at build time
 var Version string
+var DisableGC string
 
 func main() {
+	// To allow working around silly GC-related issues, like https://gitlab.com/qemu-project/qemu/-/issues/2560
+	if strings.ToLower(DisableGC) == "true" {
+		debug.SetGCPercent(-1)
+	}
+
 	retCode := 0
 	defer func() { os.Exit(retCode) }()
 

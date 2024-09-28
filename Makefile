@@ -13,6 +13,11 @@ GOFLAGS?=
 LDFLAGS+=-s -w -X main.Version=$(VERSION)
 RM?=rm -f
 GOTEST=go test -count=1 -race
+DISABLE_GOGC?=
+
+ifeq ($(DISABLE_GOGC),1)
+	LDFLAGS+=-X main.DisableGC=true
+endif
 
 GOSRC!=find * -name '*.go'
 GOSRC+=go.mod go.sum
