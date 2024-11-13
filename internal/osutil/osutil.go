@@ -40,11 +40,6 @@ func MergeUsr(file string) string {
 		}
 	}
 
-	// Convert /usr/sbin --> /usr/bin
-	if part, found := strings.CutPrefix(file, "/usr/sbin"); found {
-		file = filepath.Join("/usr/bin/", part)
-	}
-
 	return file
 }
 

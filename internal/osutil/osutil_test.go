@@ -18,11 +18,11 @@ func TestMergeUsr(t *testing.T) {
 		},
 		{
 			in:       "/sbin/foo",
-			expected: "/usr/bin/foo",
+			expected: "/usr/sbin/foo",
 		},
 		{
 			in:       "/usr/sbin/foo",
-			expected: "/usr/bin/foo",
+			expected: "/usr/sbin/foo",
 		},
 		{
 			in:       "/usr/bin/foo",
