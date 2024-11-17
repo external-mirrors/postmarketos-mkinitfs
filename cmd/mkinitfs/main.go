@@ -40,6 +40,7 @@ func main() {
 	defer func() { os.Exit(retCode) }()
 
 	outDir := flag.String("d", "/boot", "Directory to output initfs(-extra) and other boot files")
+	kernVerArg := flag.String("k", "guess", "Kernel version to run for")
 
 	var showVersion bool
 	flag.BoolVar(&showVersion, "version", false, "Print version and quit.")
@@ -47,6 +48,8 @@ func main() {
 	var disableBootDeploy bool
 	flag.BoolVar(&disableBootDeploy, "no-bootdeploy", false, "Disable running 'boot-deploy' after generating archives.")
 	flag.Parse()
+
+	kernVer := *kernVerArg
 
 	if showVersion {
 		fmt.Printf("%s - %s\n", filepath.Base(os.Args[0]), Version)
@@ -68,11 +71,14 @@ func main() {
 
 	defer misc.TimeFunc(time.Now(), "mkinitfs")
 
-	kernVer, err := osutil.GetKernelVersion()
-	if err != nil {
-		log.Println(err)
-		retCode = 1
-		return
+	if kernVer == "guess" {
+		_kernVer, err := osutil.GetKernelVersion()
+		if err != nil {
+			log.Println(err)
+			retCode = 1
+			return
+		}
+		kernVer = _kernVer
 	}
 
 	// temporary working dir
@@ -111,16 +117,16 @@ func main() {
 		hookfiles.New("/etc/mkinitfs/files"),
 		hookscripts.New("/usr/share/mkinitfs/hooks", "/hooks"),
 		hookscripts.New("/etc/mkinitfs/hooks", "/hooks"),
-		modules.New("/usr/share/mkinitfs/modules"),
-		modules.New("/etc/mkinitfs/modules"),
+		modules.New("/usr/share/mkinitfs/modules", kernVer),
+		modules.New("/etc/mkinitfs/modules", kernVer),
 	})
 	initfsExtra := initramfs.New([]filelist.FileLister{
 		hookfiles.New("/usr/share/mkinitfs/files-extra"),
 		hookfiles.New("/etc/mkinitfs/files-extra"),
 		hookscripts.New("/usr/share/mkinitfs/hooks-extra", "/hooks-extra"),
 		hookscripts.New("/etc/mkinitfs/hooks-extra", "/hooks-extra"),
-		modules.New("/usr/share/mkinitfs/modules-extra"),
-		modules.New("/etc/mkinitfs/modules-extra"),
+		modules.New("/usr/share/mkinitfs/modules-extra", kernVer),
+		modules.New("/etc/mkinitfs/modules-extra", kernVer),
 	})
 
 	if err := initramfsAr.AddItems(initfs); err != nil {
@@ -141,7 +147,7 @@ func main() {
 		}
 	}
 
-	if err := initramfsAr.Write(filepath.Join(workDir, "initramfs"), os.FileMode(0644)); err != nil {
+	if err := initramfsAr.Write(filepath.Join(workDir, fmt.Sprintf("initramfs-%s", kernVer)), os.FileMode(0644)); err != nil {
 		log.Println(err)
 		log.Println("failed to generate: ", "initramfs")
 		retCode = 1
@@ -177,7 +183,7 @@ func main() {
 
 	// Final processing of initramfs / kernel is done by boot-deploy
 	if !disableBootDeploy {
-		if err := bootDeploy(workDir, *outDir, devinfo); err != nil {
+		if err := bootDeploy(workDir, *outDir, devinfo, kernVer); err != nil {
 			log.Println(err)
 			log.Println("boot-deploy failed")
 			retCode = 1
@@ -186,10 +192,10 @@ func main() {
 	}
 }
 
-func bootDeploy(workDir string, outDir string, devinfo deviceinfo.DeviceInfo) error {
+func bootDeploy(workDir string, outDir string, devinfo deviceinfo.DeviceInfo, kernVer string) error {
 	log.Print("== Using boot-deploy to finalize/install files ==")
 	defer misc.TimeFunc(time.Now(), "boot-deploy")
 
-	bd := bootdeploy.New(workDir, outDir, devinfo)
+	bd := bootdeploy.New(workDir, outDir, devinfo, kernVer)
 	return bd.Run()
 }

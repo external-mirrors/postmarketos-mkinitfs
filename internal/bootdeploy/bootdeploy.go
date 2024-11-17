@@ -18,6 +18,7 @@ type BootDeploy struct {
 	inDir   string
 	outDir  string
 	devinfo deviceinfo.DeviceInfo
+	kernVer string
 }
 
 // New returns a new BootDeploy, which then runs:
@@ -26,11 +27,12 @@ type BootDeploy struct {
 //
 // devinfo is used to access some deviceinfo values, such as UbootBoardname
 // and GenerateSystemdBoot
-func New(inDir string, outDir string, devinfo deviceinfo.DeviceInfo) *BootDeploy {
+func New(inDir string, outDir string, devinfo deviceinfo.DeviceInfo, kernVer string) *BootDeploy {
 	return &BootDeploy{
 		inDir:   inDir,
 		outDir:  outDir,
 		devinfo: devinfo,
+		kernVer: kernVer,
 	}
 }
 
@@ -43,10 +45,11 @@ func (b *BootDeploy) Run() error {
 		}
 	}
 
-	kernels, err := getKernelPath(b.outDir, b.devinfo.GenerateSystemdBoot == "true")
+	kernels, err := getKernelPath(b.outDir, b.kernVer, b.devinfo.GenerateSystemdBoot == "true")
 	if err != nil {
 		return err
 	}
+	println(fmt.Sprintf("kernels: %v\n", kernels))
 
 	// Pick a kernel that does not have suffixes added by boot-deploy
 	var kernFile string
@@ -79,8 +82,9 @@ func (b *BootDeploy) Run() error {
 
 	// boot-deploy -i initramfs -k vmlinuz-postmarketos-rockchip -d /tmp/cpio -o /tmp/foo initramfs-extra
 	args := []string{
-		"-i", "initramfs",
+		"-i", fmt.Sprintf("initramfs-%s", b.kernVer),
 		"-k", kernFilename,
+		"-v", b.kernVer,
 		"-d", b.inDir,
 		"-o", b.outDir,
 	}
@@ -88,6 +92,7 @@ func (b *BootDeploy) Run() error {
 	if b.devinfo.CreateInitfsExtra {
 		args = append(args, "initramfs-extra")
 	}
+	println(fmt.Sprintf("Calling boot-deply with args: %v\n", args))
 	cmd := exec.Command("boot-deploy", args...)
 
 	cmd.Stdout = os.Stdout
@@ -99,20 +104,20 @@ func (b *BootDeploy) Run() error {
 	return nil
 }
 
-func getKernelPath(outDir string, zboot bool) ([]string, error) {
+func getKernelPath(outDir string, kernVer string, zboot bool) ([]string, error) {
 	var kernels []string
 	if zboot {
-		kernels, _ = filepath.Glob(filepath.Join(outDir, "linux.efi"))
+		kernels, _ = filepath.Glob(filepath.Join(outDir, fmt.Sprintf("linux-%s.efi", kernVer)))
 		if len(kernels) > 0 {
 			return kernels, nil
 		}
 		// else fallback to vmlinuz* below
 	}
 
-	kernFile := "vmlinuz*"
+	kernFile := fmt.Sprintf("vmlinuz-%s", kernVer)
 	kernels, _ = filepath.Glob(filepath.Join(outDir, kernFile))
 	if len(kernels) == 0 {
-		return nil, errors.New("Unable to find any kernels at " + filepath.Join(outDir, kernFile))
+		return nil, errors.New("Unable to find any kernels at " + filepath.Join(outDir, kernFile) + " or " + filepath.Join(outDir, fmt.Sprintf("linux-%s.efi", kernVer)))
 	}
 
 	return kernels, nil

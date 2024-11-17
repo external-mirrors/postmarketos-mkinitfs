@@ -12,26 +12,22 @@ import (
 
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/filelist"
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/misc"
-	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/osutil"
 )
 
 type Modules struct {
 	modulesListPath string
+	kernVer         string
 }
 
 // New returns a new Modules that will read in lists of kernel modules in the given path.
-func New(modulesListPath string) *Modules {
+func New(modulesListPath string, kernVer string) *Modules {
 	return &Modules{
 		modulesListPath: modulesListPath,
+		kernVer:         kernVer,
 	}
 }
 
 func (m *Modules) List() (*filelist.FileList, error) {
-	kernVer, err := osutil.GetKernelVersion()
-	if err != nil {
-		return nil, err
-	}
-
 	files := filelist.NewFileList()
 	libDir := "/usr/lib/modules"
 	if exists, err := misc.Exists(libDir); !exists {
@@ -40,7 +36,7 @@ func (m *Modules) List() (*filelist.FileList, error) {
 		return nil, fmt.Errorf("received unexpected error when getting status for %q: %w", libDir, err)
 	}
 
-	modDir := filepath.Join(libDir, kernVer)
+	modDir := filepath.Join(libDir, m.kernVer)
 	if exists, err := misc.Exists(modDir); !exists {
 		// dir /lib/modules/<kernel> if kernel built without module support, so just print a message
 		log.Printf("-- kernel module directory not found: %q, not including modules", modDir)
