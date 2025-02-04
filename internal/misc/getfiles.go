@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
+	"log"
 
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/osutil"
 )
@@ -22,39 +24,51 @@ func GetFiles(list []string, required bool) (files []string, err error) {
 	return
 }
 
-func getFile(file string, required bool) (files []string, err error) {
-	// Expand glob expression
-	expanded, err := filepath.Glob(file)
+// This function doesn't handle globs, use getFile() instead.
+func getFileNormalized(file string, required bool) (files []string, err error) {
+	fileInfo, err := os.Stat(file)
+
+	// Trying some fallbacks...
 	if err != nil {
-		return
-	}
-	if len(expanded) > 0 && expanded[0] != file {
-		for _, path := range expanded {
-			if globFiles, err := getFile(path, required); err != nil {
-				return files, err
+		type triedResult struct {
+			file string
+			err error
+		}
+
+		triedFiles := make([]triedResult, 0, 1)
+
+		// Temporary fallback until alpine/pmOS usr-merge happened
+		// If a path starts with /bin or /sbin, also try /usr equivalent before giving up
+		if strings.HasPrefix(file, "/bin/") || strings.HasPrefix(file, "/sbin/") {
+			fileUsr := filepath.Join("/usr", file)
+			_, err := os.Stat(fileUsr);
+			if err == nil {
+				log.Printf("getFile: failed to find %q, but found it in %q. Please adjust the path.", file, fileUsr)
+				return getFileNormalized(fileUsr, required)
 			} else {
-				files = append(files, globFiles...)
+				triedFiles = append(triedFiles, triedResult{fileUsr, err})
 			}
 		}
-		return RemoveDuplicates(files), nil
-	}
 
-	fileInfo, err := os.Stat(file)
-	if err != nil {
-		// Check if there is a Zstd-compressed version of the file
-		fileZstd := file + ".zst" // .zst is the extension used by linux-firmware
-		fileInfoZstd, errZstd := os.Stat(fileZstd)
-
-		if errZstd == nil {
-			file = fileZstd
-			fileInfo = fileInfoZstd
-			// Unset nil so we don't retain the error from the os.Stat call for the uncompressed version.
-			err = nil
-		} else {
-			if required {
-				return files, fmt.Errorf("getFile: failed to stat file %q: %w (also tried %q: %w)", file, err, fileZstd, errZstd)
+		{
+			// Check if there is a Zstd-compressed version of the file
+			fileZstd := file + ".zst" // .zst is the extension used by linux-firmware
+			_, err := os.Stat(fileZstd);
+			if err == nil {
+				return getFileNormalized(fileZstd, required)
+			} else {
+				triedFiles = append(triedFiles, triedResult{fileZstd, err})
 			}
-
+		}
+		
+		// Failed to find anything
+		if required {
+			failStrings := make([]string, 0, 2)
+			for _, result := range triedFiles {
+				failStrings = append(failStrings, fmt.Sprintf("\n - also tried %q: %v", result.file, result.err))
+			}
+			return files, fmt.Errorf("getFile: failed to stat file %q: %v%q", file, err, strings.Join(failStrings, ""))
+		} else {
 			return files, nil
 		}
 	}
@@ -93,6 +107,26 @@ func getFile(file string, required bool) (files []string, err error) {
 
 	files = RemoveDuplicates(files)
 	return
+}
+
+func getFile(file string, required bool) (files []string, err error) {
+	// Expand glob expression
+	expanded, err := filepath.Glob(file)
+	if err != nil {
+		return
+	}
+	if len(expanded) > 0 && expanded[0] != file {
+		for _, path := range expanded {
+			if globFiles, err := getFile(path, required); err != nil {
+				return files, err
+			} else {
+				files = append(files, globFiles...)
+			}
+		}
+		return RemoveDuplicates(files), nil
+	}
+
+	return getFileNormalized(file, required)
 }
 
 func getDeps(file string, parents map[string]struct{}) (files []string, err error) {
