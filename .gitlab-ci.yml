@@ -20,13 +20,17 @@ workflow:
 
 build:
   stage: build
+  variables:
+    GOTEST: "gotestsum --junitfile report.xml --format testname -- ./..."
   before_script:
-    - apk -q add go staticcheck make scdoc
+    - apk -q add go gotestsum staticcheck make scdoc
   script:
     - make test
     - make
   artifacts:
     expire_in: 1 week
+    reports:
+      junit: report.xml
 
 vendor:
   stage: vendor

@@ -12,7 +12,8 @@ GO?=go
 GOFLAGS?=
 LDFLAGS+=-s -w -X main.Version=$(VERSION)
 RM?=rm -f
-GOTEST=go test -count=1 -race
+GOTESTOPTS?=-count=1 -race
+GOTEST?=go test ./...
 DISABLE_GOGC?=
 
 ifeq ($(DISABLE_GOGC),1)
@@ -47,10 +48,10 @@ test:
 	fi
 	@staticcheck ./...
 
-	@$(GOTEST) ./...
+	$(GOTEST) $(GOTESTOPTS)
 
 clean:
-	$(RM) mkinitfs $(DOCS) 
+	$(RM) mkinitfs $(DOCS)
 	$(RM) $(VENDORED)*
 
 install: $(DOCS) mkinitfs
