@@ -8,28 +8,18 @@ variables:
   PACKAGE_REGISTRY_URL: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/mkinitfs-vendor-${CI_COMMIT_TAG}/${CI_COMMIT_TAG}"
 
 stages:
-  - lint
   - build
   - vendor
   - release
 
-# defaults for "only"
-# We need to run the CI jobs in a "merge request specific context", if CI is
-# running in a merge request. Otherwise the environment variable that holds the
-# merge request ID is not available. This means, we must set the "only"
-# variable accordingly - and if we only do it for one job, all other jobs will
-# not get executed. So have the defaults here, and use them in all jobs that
-# should run on both the master branch, and in merge requests.
-# https://docs.gitlab.com/ee/ci/merge_request_pipelines/index.html#excluding-certain-jobs
-.only-default: &only-default
-  only:
-    - master
-    - merge_requests
-    - tags
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == 'master'
+    - if: '$CI_COMMIT_TAG != null'
 
 build:
   stage: build
-  <<: *only-default
   before_script:
     - apk -q add go staticcheck make scdoc
   script:
@@ -41,8 +31,8 @@ build:
 vendor:
   stage: vendor
   image: alpine:latest
-  only:
-    - tags
+  rules:
+    - if: '$CI_COMMIT_TAG != null'
   before_script:
     - apk -q add curl go make
   script:
@@ -54,8 +44,8 @@ vendor:
 release:
   stage: release
   image: registry.gitlab.com/gitlab-org/release-cli:latest
-  only:
-    - tags
+  rules:
+    - if: '$CI_COMMIT_TAG != null'
   script:
     - |
       release-cli create --name "Release $CI_COMMIT_TAG" --tag-name $CI_COMMIT_TAG \
