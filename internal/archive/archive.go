@@ -421,7 +421,6 @@ func (archive *Archive) writeCpio() error {
 		archive.addSymlink("/bin", "/bin")
 		archive.addSymlink("/sbin", "/sbin")
 		archive.addSymlink("/lib", "/lib")
-		archive.addSymlink("/usr/sbin", "/usr/sbin")
 	}
 	// having a transient function for actually adding files to the archive
 	// allows the deferred fd.close to run after every copy and prevent having
