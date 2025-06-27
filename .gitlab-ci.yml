@@ -6,9 +6,18 @@ image: alpine:edge
 variables:
   GOFLAGS: "-buildvcs=false"
   PACKAGE_REGISTRY_URL: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/mkinitfs-vendor-${CI_COMMIT_TAG}/${CI_COMMIT_TAG}"
+  CI_TRON_TEMPLATE_PROJECT: &ci-tron-template-project postmarketOS/ci-common
+  CI_TRON_JOB_TEMPLATE_PROJECT_URL: $CI_SERVER_URL/$CI_TRON_TEMPLATE_PROJECT
+  CI_TRON_JOB_TEMPLATE_COMMIT: &ci-tron-template-commit 7c95b5f2d53533e8722abf57c73e558168e811f3
+
+include:
+  - project: *ci-tron-template-project
+    ref: *ci-tron-template-commit
+    file: '/ci-tron/common.yml'
 
 stages:
   - build
+  - hardware tests
   - vendor
   - release
 
@@ -27,10 +36,62 @@ build:
   script:
     - make test
     - make
+  after_script:
+    - mkdir -p rootfs/usr/sbin
+    - cp mkinitfs rootfs/usr/sbin
   artifacts:
     expire_in: 1 week
     reports:
       junit: report.xml
+    paths:
+      - rootfs
+
+.qemu-common:
+  variables:
+    DEVICE_NAME: qemu-$CPU_ARCH
+    KERNEL_VARIANT: lts
+
+build-ci-tron-qemu:
+  stage: hardware tests
+  extends:
+    - .pmos-ci-tron-build-boot-artifacts
+    - .qemu-common
+  needs: ["build"]
+  parallel:
+    matrix:
+      - CPU_ARCH:
+        - amd64
+        - aarch64
+  variables:
+    INSTALL_PACKAGES: device-${DEVICE_NAME} device-${DEVICE_NAME}-kernel-${KERNEL_VARIANT} postmarketos-mkinitfs-hook-ci
+
+.test-ci-tron-qemu:
+  stage: hardware tests
+  extends:
+    - .pmos-ci-tron-initramfs-test
+    - .qemu-common
+  dependencies: []
+  needs:
+    - job: 'build-ci-tron-qemu'
+      artifacts: false
+  variables:
+    CI_TRON_KERNEL__URL: "glartifact://build-ci-tron-qemu: [$CPU_ARCH]/${CI_TRON__PMB_EXPORT_PATH}/vmlinuz-${KERNEL_VARIANT}"
+    CI_TRON_INITRAMFS__INITRAMFS__URL: "glartifact://build-ci-tron-qemu: [$CPU_ARCH]/${CI_TRON__PMB_EXPORT_PATH}/initramfs"
+    CI_TRON_KERNEL_CMDLINE__DEVICEINFO: 'console=tty1 console=ttyS0,115200 PMOS_FORCE_PARTITION_RESIZE'
+
+test-ci-tron-qemu-amd64:
+  extends:
+    - .test-ci-tron-qemu
+    - .pmos-ci-tron-runner-qemu-amd64
+  variables:
+    CPU_ARCH: amd64
+
+test-ci-tron-qemu-aarch64:
+  extends:
+    - .test-ci-tron-qemu
+    - .pmos-ci-tron-runner-qemu-aarch64
+  variables:
+    CPU_ARCH: aarch64
 
 vendor:
   stage: vendor
