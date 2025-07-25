@@ -31,6 +31,12 @@ build:
   stage: build
   variables:
     GOTEST: "gotestsum --junitfile report.xml --format testname -- ./..."
+  parallel:
+    matrix:
+      - TAG: shared
+      - TAG: arm64
+  tags:
+    - $TAG
   before_script:
     - apk -q add go gotestsum staticcheck make scdoc
   script:
@@ -51,19 +57,35 @@ build:
     DEVICE_NAME: qemu-$CPU_ARCH
     KERNEL_VARIANT: lts
 
-build-ci-tron-qemu:
+.build-ci-tron-qemu:
   stage: hardware tests
   extends:
     - .pmos-ci-tron-build-boot-artifacts
     - .qemu-common
-  needs: ["build"]
-  parallel:
-    matrix:
-      - CPU_ARCH:
-        - amd64
-        - aarch64
   variables:
     INSTALL_PACKAGES: device-${DEVICE_NAME} device-${DEVICE_NAME}-kernel-${KERNEL_VARIANT} postmarketos-mkinitfs-hook-ci
+
+build-ci-tron-qemu-amd64:
+  extends:
+    - .build-ci-tron-qemu
+  needs:
+    - job: "build"
+      parallel:
+        matrix:
+          - TAG: shared
+  variables:
+    CPU_ARCH: amd64
+
+build-ci-tron-qemu-aarch64:
+  extends:
+    - .build-ci-tron-qemu
+  needs:
+    - job: "build"
+      parallel:
+        matrix:
+          - TAG: arm64
+  variables:
+    CPU_ARCH: aarch64
 
 .test-ci-tron-qemu:
   stage: hardware tests
@@ -71,18 +93,18 @@ build-ci-tron-qemu:
     - .pmos-ci-tron-initramfs-test
     - .qemu-common
   dependencies: []
-  needs:
-    - job: 'build-ci-tron-qemu'
-      artifacts: false
   variables:
-    CI_TRON_KERNEL__URL: "glartifact://build-ci-tron-qemu: [$CPU_ARCH]/${CI_TRON__PMB_EXPORT_PATH}/vmlinuz-${KERNEL_VARIANT}"
-    CI_TRON_INITRAMFS__INITRAMFS__URL: "glartifact://build-ci-tron-qemu: [$CPU_ARCH]/${CI_TRON__PMB_EXPORT_PATH}/initramfs"
+    CI_TRON_KERNEL__URL: "glartifact://build-ci-tron-qemu-$CPU_ARCH/${CI_TRON__PMB_EXPORT_PATH}/vmlinuz-${KERNEL_VARIANT}"
+    CI_TRON_INITRAMFS__INITRAMFS__URL: "glartifact://build-ci-tron-qemu-$CPU_ARCH/${CI_TRON__PMB_EXPORT_PATH}/initramfs"
     CI_TRON_KERNEL_CMDLINE__DEVICEINFO: 'console=tty1 console=ttyS0,115200 PMOS_FORCE_PARTITION_RESIZE'
 
 test-ci-tron-qemu-amd64:
   extends:
     - .test-ci-tron-qemu
     - .pmos-ci-tron-runner-qemu-amd64
+  needs:
+    - job: 'build-ci-tron-qemu-amd64'
+      artifacts: false
   variables:
     CPU_ARCH: amd64
 
@@ -90,6 +112,9 @@ test-ci-tron-qemu-aarch64:
   extends:
     - .test-ci-tron-qemu
     - .pmos-ci-tron-runner-qemu-aarch64
+  needs:
+    - job: 'build-ci-tron-qemu-aarch64'
+      artifacts: false
   variables:
     CPU_ARCH: aarch64
 
