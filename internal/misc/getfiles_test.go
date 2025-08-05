@@ -107,6 +107,24 @@ func TestGetFile(t *testing.T) {
 			},
 			required: true,
 		},
+		{
+			name: "zst compressed file fallback",
+			setup: func(tmpDir string) (string, []string, error) {
+				// Create a .zst file but NOT the original file
+				zstFile := filepath.Join(tmpDir, "firmware.bin.zst")
+				if err := os.WriteFile(zstFile, []byte("compressed content"), 0644); err != nil {
+					return "", nil, err
+				}
+
+				// Request the original file (without .zst extension)
+				originalFile := filepath.Join(tmpDir, "firmware.bin")
+
+				// Expected: should find and return the .zst version
+				expected := []string{zstFile}
+				return originalFile, expected, nil
+			},
+			required: true,
+		},
 	}
 
 	for _, st := range subtests {

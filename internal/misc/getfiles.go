@@ -47,14 +47,14 @@ func getFile(file string, required bool) (files []string, err error) {
 	// 2) set file to dereferenced target
 	// 4) continue this function to either walk it if the target is a dir or add the
 	// target to the list of files
-	if s, err := os.Lstat(file); err != nil {
-		return files, err
-	} else if s.Mode()&fs.ModeSymlink != 0 {
-		files = append(files, file)
-		if target, err := filepath.EvalSymlinks(file); err != nil {
-			return files, err
-		} else {
-			file = target
+	if s, err := os.Lstat(file); err == nil {
+		if s.Mode()&fs.ModeSymlink != 0 {
+			files = append(files, file)
+			if target, err := filepath.EvalSymlinks(file); err != nil {
+				return files, err
+			} else {
+				file = target
+			}
 		}
 	}
 
