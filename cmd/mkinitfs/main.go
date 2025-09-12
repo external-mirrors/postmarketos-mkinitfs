@@ -111,6 +111,8 @@ func main() {
 		hookfiles.New("/etc/mkinitfs/files"),
 		hookscripts.New("/usr/share/mkinitfs/hooks", "/hooks"),
 		hookscripts.New("/etc/mkinitfs/hooks", "/hooks"),
+		hookscripts.New("/usr/share/mkinitfs/hooks-cleanup", "/hooks-cleanup"),
+		hookscripts.New("/etc/mkinitfs/hooks-cleanup", "/hooks-cleanup"),
 		modules.New("/usr/share/mkinitfs/modules"),
 		modules.New("/etc/mkinitfs/modules"),
 	})

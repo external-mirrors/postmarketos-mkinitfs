@@ -134,7 +134,8 @@ create/manage. mkinitfs reads configuration from */usr/share/mkinitfs* first, an
 	skipped.
 
 ## /usr/share/mkinitfs/hooks, /etc/mkinitfs/hooks
-## /usr/share/mkinitfs/hooks-extra*, /etc/mkinitfs/hooks-extra
+## /usr/share/mkinitfs/hooks-cleanup, /etc/mkinitfs/hooks-cleanup
+## /usr/share/mkinitfs/hooks-extra, /etc/mkinitfs/hooks-extra
 
 	Any files listed under these directories are copied as-is into the
 	relevant archives. Hooks are generally script files, but how they are
