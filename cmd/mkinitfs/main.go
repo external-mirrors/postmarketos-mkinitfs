@@ -48,6 +48,9 @@ func main() {
 	flag.BoolVar(&disableBootDeploy, "no-bootdeploy", false, "Disable running 'boot-deploy' after generating archives.")
 	flag.Parse()
 
+	var verbose bool
+	flag.BoolVar(&verbose, "verbose", false, "Enable verbose output.")
+
 	if showVersion {
 		fmt.Printf("%s - %s\n", filepath.Base(os.Args[0]), Version)
 		return

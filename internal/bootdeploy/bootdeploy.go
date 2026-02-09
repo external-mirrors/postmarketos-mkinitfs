@@ -25,7 +25,6 @@ type BootDeploy struct {
 //	boot-deploy -d indir -o outDir
 //
 // devinfo is used to access some deviceinfo values, such as UbootBoardname
-// and GenerateSystemdBoot
 func New(inDir string, outDir string, devinfo deviceinfo.DeviceInfo) *BootDeploy {
 	return &BootDeploy{
 		inDir:   inDir,
@@ -43,7 +42,7 @@ func (b *BootDeploy) Run() error {
 		}
 	}
 
-	kernels, err := getKernelPath(b.outDir, b.devinfo.GenerateSystemdBoot == "true")
+	kernels, err := getKernelPath(b.outDir)
 	if err != nil {
 		return err
 	}
@@ -99,14 +98,11 @@ func (b *BootDeploy) Run() error {
 	return nil
 }
 
-func getKernelPath(outDir string, zboot bool) ([]string, error) {
+func getKernelPath(outDir string) ([]string, error) {
 	var kernels []string
-	if zboot {
-		kernels, _ = filepath.Glob(filepath.Join(outDir, "linux.efi"))
-		if len(kernels) > 0 {
-			return kernels, nil
-		}
-		// else fallback to vmlinuz* below
+	kernels, _ = filepath.Glob(filepath.Join(outDir, "linux.efi"))
+	if len(kernels) > 0 {
+		return kernels, nil
 	}
 
 	kernFile := "vmlinuz*"

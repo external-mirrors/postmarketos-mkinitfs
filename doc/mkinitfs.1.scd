@@ -43,7 +43,6 @@ mkinitfs reads deviceinfo values from */usr/share/deviceinfo/deviceinfo* and
 are *required* by mkinitfs:
 
 	- deviceinfo_create_initfs_extra
-	- deviceinfo_generate_systemd_boot
 	- deviceinfo_initfs_compression
 	- deviceinfo_initfs_extra_compression
 	- deviceinfo_uboot_boardname
