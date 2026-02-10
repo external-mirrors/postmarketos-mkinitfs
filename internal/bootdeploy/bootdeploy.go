@@ -2,14 +2,11 @@ package bootdeploy
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"log"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
-	"strings"
 
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/pkgs/deviceinfo"
 )
@@ -42,44 +39,9 @@ func (b *BootDeploy) Run() error {
 		}
 	}
 
-	kernels, err := getKernelPath(b.outDir)
-	if err != nil {
-		return err
-	}
-
-	// Pick a kernel that does not have suffixes added by boot-deploy
-	var kernFile string
-	for _, f := range kernels {
-		if strings.HasSuffix(f, "-dtb") || strings.HasSuffix(f, "-mtk") {
-			continue
-		}
-		kernFile = f
-		break
-	}
-
-	kernFd, err := os.Open(kernFile)
-	if err != nil {
-		return err
-	}
-	defer kernFd.Close()
-
-	kernFilename := path.Base(kernFile)
-	kernFileCopy, err := os.Create(filepath.Join(b.inDir, kernFilename))
-	if err != nil {
-		return err
-	}
-
-	if _, err = io.Copy(kernFileCopy, kernFd); err != nil {
-		return err
-	}
-	if err := kernFileCopy.Close(); err != nil {
-		return fmt.Errorf("error closing %s: %w", kernFilename, err)
-	}
-
 	// boot-deploy -i initramfs -k vmlinuz-postmarketos-rockchip -d /tmp/cpio -o /tmp/foo initramfs-extra
 	args := []string{
 		"-i", "initramfs",
-		"-k", kernFilename,
 		"-d", b.inDir,
 		"-o", b.outDir,
 	}
@@ -96,22 +58,6 @@ func (b *BootDeploy) Run() error {
 	}
 
 	return nil
-}
-
-func getKernelPath(outDir string) ([]string, error) {
-	var kernels []string
-	kernels, _ = filepath.Glob(filepath.Join(outDir, "linux.efi"))
-	if len(kernels) > 0 {
-		return kernels, nil
-	}
-
-	kernFile := "vmlinuz*"
-	kernels, _ = filepath.Glob(filepath.Join(outDir, kernFile))
-	if len(kernels) == 0 {
-		return nil, errors.New("Unable to find any kernels at " + filepath.Join(outDir, kernFile))
-	}
-
-	return kernels, nil
 }
 
 // Copy copies the file at srcFile path to a new file at dstFile path
