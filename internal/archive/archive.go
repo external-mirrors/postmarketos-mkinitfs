@@ -1,4 +1,4 @@
-// Copyright 2021 Clayton Craft <clayton@craftyguy.net>
+// Copyright 2026 Clayton Craft <clayton@craftyguy.net>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 package archive
@@ -51,6 +51,7 @@ type Archive struct {
 	compress_format CompressFormat
 	compress_level  CompressLevel
 	items           archiveItems
+	destPrefixes    map[string]string
 }
 
 func New(format CompressFormat, level CompressLevel) *Archive {
@@ -62,6 +63,30 @@ func New(format CompressFormat, level CompressLevel) *Archive {
 		compress_level:  level,
 	}
 
+	archive.destPrefixes = map[string]string{
+		"/bin":      "/usr/bin",
+		"/sbin":     "/usr/bin",
+		"/lib":      "/usr/lib",
+		"/usr/sbin": "/usr/bin",
+	}
+
+	// Add usr-merged symlinks first
+	archive.addDir("usr")
+	for _, s := range []struct{ name, target string }{
+		{"bin", "usr/bin"},
+		{"sbin", "usr/bin"},
+		{"lib", "usr/lib"},
+		{"usr/sbin", "bin"},
+	} {
+		archive.items.add(archiveItem{
+			header: &cpio.Header{
+				Name:     s.name,
+				Linkname: s.target,
+				Mode:     0644 | cpio.TypeSymlink,
+				Size:     int64(len(s.target)),
+			},
+		})
+	}
 	return archive
 }
 
@@ -235,12 +260,10 @@ func (archive *Archive) AddItemsExclude(flister filelist.FileLister, exclude fil
 	return nil
 }
 
-// Adds the given file or directory at "source" to the archive at "dest"
+// AddItem adds the file or directory at source to the archive at dest,
+// rewriting dest to canonical paths based on the archive's prefix map.
 func (archive *Archive) AddItem(source string, dest string) error {
-	if osutil.HasMergedUsr() {
-		source = osutil.MergeUsr(source)
-		dest = osutil.MergeUsr(dest)
-	}
+	dest = archive.rewriteDest(dest)
 	sourceStat, err := os.Lstat(source)
 	if err != nil {
 		e, ok := err.(*os.PathError)
@@ -262,6 +285,18 @@ func (archive *Archive) AddItem(source string, dest string) error {
 	}
 
 	return archive.addFile(source, dest)
+}
+
+// rewriteDest rewrites dest to its canonical path based on the archive's
+// prefix map, ensuring paths under merged-usr symlinks are stored under their
+// real location
+func (archive *Archive) rewriteDest(dest string) string {
+	for prefix, target := range archive.destPrefixes {
+		if dest == prefix || strings.HasPrefix(dest, prefix+"/") {
+			return target + strings.TrimPrefix(dest, prefix)
+		}
+	}
+	return dest
 }
 
 func (archive *Archive) addSymlink(source string, dest string) error {
@@ -421,12 +456,6 @@ func (archive *Archive) writeCompressed(path string, mode os.FileMode) (err erro
 }
 
 func (archive *Archive) writeCpio() error {
-	// Just in case
-	if osutil.HasMergedUsr() {
-		archive.addSymlink("/bin", "/bin")
-		archive.addSymlink("/sbin", "/sbin")
-		archive.addSymlink("/lib", "/lib")
-	}
 	// having a transient function for actually adding files to the archive
 	// allows the deferred fd.close to run after every copy and prevent having
 	// tons of open file handles until the copying is all done
