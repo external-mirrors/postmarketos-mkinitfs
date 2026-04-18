@@ -10,39 +10,6 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-// Try to guess whether the system has merged dirs under /usr
-func HasMergedUsr() bool {
-	for _, dir := range []string{"/bin", "/lib"} {
-		stat, err := os.Lstat(dir)
-		if err != nil {
-			// TODO: probably because the dir doesn't exist... so
-			// should we assume that it's because the system has some weird
-			// implementation of "merge /usr"?
-			return true
-		} else if stat.Mode()&os.ModeSymlink == 0 {
-			// Not a symlink, so must not be merged /usr
-			return false
-		}
-	}
-	return true
-}
-
-// Converts given path to one supported by a merged /usr config.
-// E.g., /bin/foo becomes /usr/bin/foo, /lib/bar becomes /usr/lib/bar
-// See: https://www.freedesktop.org/wiki/Software/systemd/TheCaseForTheUsrMerge
-func MergeUsr(file string) string {
-
-	// Prepend /usr to supported paths
-	for _, prefix := range []string{"/bin", "/sbin", "/lib", "/lib64"} {
-		if strings.HasPrefix(file, prefix) {
-			file = filepath.Join("/usr", file)
-			break
-		}
-	}
-
-	return file
-}
-
 // Converts a relative symlink target path (e.g. ../../lib/foo.so), that is
 // absolute path
 func RelativeSymlinkTargetToDir(symPath string, dir string) (string, error) {
