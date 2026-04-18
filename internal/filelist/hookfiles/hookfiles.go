@@ -11,7 +11,6 @@ import (
 
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/filelist"
 	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/misc"
-	"gitlab.com/postmarketOS/postmarketos-mkinitfs/internal/osutil"
 )
 
 type HookFiles struct {
@@ -65,9 +64,6 @@ func slurpFiles(fd io.Reader) (*filelist.FileList, error) {
 		}
 
 		src, dest, has_dest, is_optional := stripSuffix(line)
-		if osutil.HasMergedUsr() {
-			src = osutil.MergeUsr(src)
-		}
 
 		fFiles, err := misc.GetFiles([]string{src}, true)
 		if err != nil {

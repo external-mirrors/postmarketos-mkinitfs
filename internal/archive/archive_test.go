@@ -1,4 +1,4 @@
-// Copyright 2022 Clayton Craft <clayton@craftyguy.net>
+// Copyright 2026 Clayton Craft <clayton@craftyguy.net>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 package archive
@@ -273,6 +273,55 @@ func TestExtractFormatLevel(t *testing.T) {
 				t.Fatal("level expected: ", test.expectedLevel, " got: ", level)
 			}
 
+		})
+	}
+}
+
+func TestRewriteDest(t *testing.T) {
+	subtests := []struct {
+		name     string
+		in       string
+		expected string
+	}{
+		{
+			name:     "bin rewrite",
+			in:       "/bin/foo",
+			expected: "/usr/bin/foo",
+		},
+		{
+			name:     "sbin rewrite",
+			in:       "/sbin/bar",
+			expected: "/usr/bin/bar",
+		},
+		{
+			name:     "lib rewrite",
+			in:       "/lib/baz.so",
+			expected: "/usr/lib/baz.so",
+		},
+		{
+			name:     "usr/sbin rewrite",
+			in:       "/usr/sbin/foo",
+			expected: "/usr/bin/foo",
+		},
+		{
+			name:     "no rewrite",
+			in:       "/usr/bin/foo",
+			expected: "/usr/bin/foo",
+		},
+		{
+			name:     "prefix match only, no rewrite",
+			in:       "/binary/foo",
+			expected: "/binary/foo",
+		},
+	}
+
+	archive := New(FormatNone, LevelDefault)
+	for _, st := range subtests {
+		t.Run(st.name, func(t *testing.T) {
+			got := archive.rewriteDest(st.in)
+			if got != st.expected {
+				t.Fatal("expected:", st.expected, " got:", got)
+			}
 		})
 	}
 }
