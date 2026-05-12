@@ -64,14 +64,19 @@ func slurpFiles(fd io.Reader) (*filelist.FileList, error) {
 			continue
 		}
 
-		src, dest, has_dest := strings.Cut(line, ":")
+		src, dest, has_dest, is_optional := stripSuffix(line)
 		if osutil.HasMergedUsr() {
 			src = osutil.MergeUsr(src)
 		}
 
 		fFiles, err := misc.GetFiles([]string{src}, true)
 		if err != nil {
-			return nil, fmt.Errorf("unable to add %q: %w", src, err)
+			// Ignore missing optional files, otherwise fail
+			if is_optional {
+				log.Println("--- Unable to find optional path, skipping...")
+			} else {
+				return nil, fmt.Errorf("unable to add %q: %w", src, err)
+			}
 		}
 		// loop over all returned files from GetFile
 		for _, file := range fFiles {
@@ -89,4 +94,11 @@ func slurpFiles(fd io.Reader) (*filelist.FileList, error) {
 	}
 
 	return files, s.Err()
+}
+
+func stripSuffix(line string) (string, string, bool, bool) {
+	// Ignore the second return as it will always be "option" or nothing
+	option_src, _, is_optional := strings.Cut(line, "!")
+	src, dest, has_dest := strings.Cut(option_src, ":")
+	return src, dest, has_dest, is_optional
 }

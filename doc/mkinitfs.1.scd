@@ -113,6 +113,10 @@ create/manage. mkinitfs reads configuration from */usr/share/mkinitfs* first, an
 	are delimited by a *:* (colon.) Destination path is ignored if the source
 	path is a glob that returns more than 1 file. This may change in the future.
 
+	If a path does not exist in packaging but may exist at runtime, such as a
+	user override config in /etc, a line can be appended with *!optional*. This
+	will cause the path to only be included if it exists, and not otherwise.
+
 [[ *Line in .files*
 :< Comment
 |  */usr/share/bazz*
@@ -123,6 +127,10 @@ create/manage. mkinitfs reads configuration from */usr/share/mkinitfs* first, an
 :  Everything under */root/something* would be added to the archive under */root/something*
 |  */etc/foo/\*/bazz:/foo*
 :  Anything that matches the glob will be installed under the source path in the archive. For example, */etc/foo/bar/bazz* would be installed at */etc/foo/bar/bazz* in the archive. The destination path is ignored.
+|  */etc/bar/override!optional*
+:  File or directory */etc/bar/override* would be added to the archive under */etc/bar/override* if it exists in the rootfs, otherwise it will not be included.
+|  */etc/bar/override:/etc/clam/override!optional*
+:  File or directory */etc/bar/override* would be added to the archive under */etc/clam/override* if */etc/bar/override* exists in the rootfs, otherwise it will not be included.
 
 	It's possible to overwrite file/directory destinations from
 	configuration in */usr/share/mkinitfs* by specifying the same source
