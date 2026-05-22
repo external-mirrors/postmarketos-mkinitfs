@@ -300,7 +300,7 @@ func (archive *Archive) addSymlink(source string, dest string) error {
 		header: &cpio.Header{
 			Name:     destFilename,
 			Linkname: target,
-			Mode:     0644 | cpio.ModeSymlink,
+			Mode:     0644 | cpio.TypeSymlink,
 			Size:     int64(len(target)),
 		},
 	})
@@ -480,7 +480,7 @@ func (archive *Archive) addDir(dir string) error {
 			sourcePath: path,
 			header: &cpio.Header{
 				Name: path,
-				Mode: cpio.ModeDir | 0755,
+				Mode: cpio.TypeDir | 0755,
 			},
 		})
 	}

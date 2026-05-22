@@ -3,7 +3,7 @@ module gitlab.com/postmarketOS/postmarketos-mkinitfs
 go 1.25.0
 
 require (
-	github.com/cavaliergopher/cpio v1.0.0
+	github.com/cavaliergopher/cpio v1.0.1
 	github.com/klauspost/compress v1.18.6
 	github.com/mvdan/sh v2.6.4+incompatible
 	github.com/pierrec/lz4/v4 v4.1.26
