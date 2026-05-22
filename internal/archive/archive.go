@@ -265,6 +265,11 @@ func (archive *Archive) AddItem(source string, dest string) error {
 }
 
 func (archive *Archive) addSymlink(source string, dest string) error {
+	// Make sure the symlink's parent dir exists in the archive
+	if err := archive.addDir(filepath.Dir(dest)); err != nil {
+		return err
+	}
+
 	target, err := os.Readlink(source)
 	if err != nil {
 		log.Print("addSymlink: failed to get symlink target for: ", source)
