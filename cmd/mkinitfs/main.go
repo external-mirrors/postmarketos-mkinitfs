@@ -31,6 +31,13 @@ var Version string
 var DisableGC string
 
 func main() {
+	// Bail instantly if KERNEL_INSTALL_BYPASS is set
+	// See https://systemd.io/ENVIRONMENT
+	if os.Getenv("KERNEL_INSTALL_BYPASS") == "1" {
+		log.Println("KERNEL_INSTALL_BYPASS set to '1'. Skipping mkinitfs.")
+		return
+	}
+
 	// To allow working around silly GC-related issues, like https://gitlab.com/qemu-project/qemu/-/issues/2560
 	if strings.ToLower(DisableGC) == "true" {
 		debug.SetGCPercent(-1)

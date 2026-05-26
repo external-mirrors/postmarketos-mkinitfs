@@ -54,6 +54,18 @@ a bare minimum, and to require only variables that don't hold lists of things.
 necessary tools to extract the configured archive format are in the initramfs
 archive.
 
+# ENVIRONMENT VARIABLES
+
+Environment variables can be used to modify the output or execution of
+mkinitfs. The following environment variables are supported:
+
+## KERNEL_INSTALL_BYPASS
+
+Setting this to "1" causes the program to immediately exit upon execution,
+useful for when mkinitfs is executed unconditionally as a child process of
+another program. Any value other than "1" is ignored and execution will
+progress as normal.
+
 # ARCHIVE COMPRESSION
 
 Archive compression parameters are specified in the
