@@ -399,7 +399,12 @@ func (archive *Archive) writeCompressed(path string, mode os.FileMode) (err erro
 			return err
 		}
 	case FormatLzma:
-		compressor, err = xz.NewWriter(fd)
+		cfg := xz.WriterConfig{
+			// Linux does not support crc64:
+			// https://gitlab.postmarketos.org/postmarketOS/postmarketos-mkinitfs/-/work_items/56
+			CheckSum: xz.CRC32,
+		}
+		compressor, err = cfg.NewWriter(fd)
 		if err != nil {
 			return err
 		}
