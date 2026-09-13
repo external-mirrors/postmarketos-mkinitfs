@@ -92,7 +92,7 @@ The value of these variables follows this syntax: *<format>:<level>*. For
 example, *zstd* with the *fast* compression level would be:
 *deviceinfo_initfs_compression="zstd:fast"*
 
-Defaults to *gzip* and *default* for both archives if format and/or level is
+Defaults to *zstd* and *default* for both archives if format and/or level is
 unsupported or omitted.
 
 

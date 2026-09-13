@@ -202,9 +202,15 @@ func TestExtractFormatLevel(t *testing.T) {
 			expectedLevel:  LevelDefault,
 		},
 		{
+			name:           "gzip, level not given",
+			in:             "gzip",
+			expectedFormat: FormatGzip,
+			expectedLevel:  LevelDefault,
+		},
+		{
 			name:           "unknown format, level 12",
 			in:             "pear:12",
-			expectedFormat: FormatGzip,
+			expectedFormat: FormatZstd,
 			expectedLevel:  LevelDefault,
 		},
 		{
@@ -240,7 +246,7 @@ func TestExtractFormatLevel(t *testing.T) {
 		{
 			name:           "<empty>, <empty>",
 			in:             "",
-			expectedFormat: FormatGzip,
+			expectedFormat: FormatZstd,
 			expectedLevel:  LevelDefault,
 		},
 		{

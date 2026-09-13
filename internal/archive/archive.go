@@ -103,7 +103,7 @@ type archiveItems struct {
 // ExtractFormatLevel parses the given string in the format format[:level],
 // where :level is one of CompressLevel consts. If level is omitted from the
 // string, or if it can't be parsed, the level is set to the default level for
-// the given format. If format is unknown, gzip is selected. This function is
+// the given format. If format is unknown, zstd is selected. This function is
 // designed to always return something usable within this package.
 func ExtractFormatLevel(s string) (format CompressFormat, level CompressLevel) {
 
@@ -135,8 +135,8 @@ func ExtractFormatLevel(s string) (format CompressFormat, level CompressLevel) {
 	case FormatNone:
 	case FormatZstd:
 	default:
-		log.Print("Unknown or no compression format set, using gzip")
-		format = FormatGzip
+		log.Print("Unknown or no compression format set, using zstd")
+		format = FormatZstd
 	}
 
 	return
@@ -440,8 +440,11 @@ func (archive *Archive) writeCompressed(path string, mode os.FileMode) (err erro
 			return err
 		}
 	default:
-		log.Print("Unknown or no compression format set, using gzip")
-		compressor = gzip.NewWriter(fd)
+		log.Print("Unknown or no compression format set, using zstd")
+		compressor, err = zstd.NewWriter(fd)
+		if err != nil {
+			return err
+		}
 	}
 
 	if _, err = io.Copy(compressor, archive.buf); err != nil {
