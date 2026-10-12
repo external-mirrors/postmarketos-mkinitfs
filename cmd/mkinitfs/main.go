@@ -165,8 +165,10 @@ func main() {
 		//
 		// initramfs-extra
 		//
-		// deviceinfo.InitfsExtraCompression needs a little more post-processing
-		compressionFormat, compressionLevel = archive.ExtractFormatLevel(devinfo.InitfsExtraCompression)
+
+		// Use gzip because it is part of Busybox and doesn't require expanding the
+		// first-stage initramfs to include zstd
+		compressionFormat, compressionLevel = archive.FormatGzip, archive.LevelDefault
 		log.Printf("== Generating %s ==\n", "initramfs-extra")
 		log.Printf("- Using compression format %s with level %q\n", compressionFormat, compressionLevel)
 

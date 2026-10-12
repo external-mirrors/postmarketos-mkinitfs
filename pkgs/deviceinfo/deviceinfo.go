@@ -16,11 +16,10 @@ import (
 )
 
 type DeviceInfo struct {
-	InitfsCompression      string
-	InitfsExtraCompression string
-	UbootBoardname         string
-	FormatVersion          string
-	CreateInitfsExtra      bool
+	InitfsCompression string
+	UbootBoardname    string
+	FormatVersion     string
+	CreateInitfsExtra bool
 }
 
 // Reads the relevant entries from "file" into DeviceInfo struct
@@ -111,12 +110,10 @@ func (d DeviceInfo) String() string {
 			%s: %v
 			%s: %v
 			%s: %v
-			%s: %v
 	}`,
 		"deviceinfo_format_version", d.FormatVersion,
 		"deviceinfo_", d.FormatVersion,
 		"deviceinfo_initfs_compression", d.InitfsCompression,
-		"deviceinfo_initfs_extra_compression", d.InitfsCompression,
 		"deviceinfo_ubootBoardname", d.UbootBoardname,
 		"deviceinfo_formatVersion", d.FormatVersion,
 		"deviceinfo_createInitfsExtra", d.CreateInitfsExtra,

@@ -41,7 +41,6 @@ func TestNameToField(t *testing.T) {
 		{"deviceinfo_initfs_compression", "InitfsCompression"},
 		{"modules_initfs", "ModulesInitfs"},
 		{"deviceinfo_initfs_compression___", "InitfsCompression"},
-		{"deviceinfo_initfs_extra_compression", "InitfsExtraCompression"},
 		{"deviceinfo_create_initfs_extra", "CreateInitfsExtra"},
 	}
 
@@ -62,11 +61,10 @@ func TestUnmarshal(t *testing.T) {
 		expected DeviceInfo
 	}{
 		{"./test_resources/deviceinfo-unmarshal-1", DeviceInfo{
-			FormatVersion:          "0",
-			UbootBoardname:         "foobar-bazz",
-			InitfsCompression:      "zstd:--foo=1 -T0 --bar=bazz",
-			InitfsExtraCompression: "",
-			CreateInitfsExtra:      true,
+			FormatVersion:     "0",
+			UbootBoardname:    "",
+			InitfsCompression: "zstd:--foo=1 -T0 --bar=bazz",
+			CreateInitfsExtra: true,
 		},
 		},
 	}
