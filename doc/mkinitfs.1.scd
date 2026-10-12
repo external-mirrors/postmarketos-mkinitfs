@@ -44,15 +44,10 @@ are *required* by mkinitfs:
 
 	- deviceinfo_create_initfs_extra
 	- deviceinfo_initfs_compression
-	- deviceinfo_initfs_extra_compression
 	- deviceinfo_uboot_boardname
 
 It is a design goal to keep the number of required variables from deviceinfo to
 a bare minimum, and to require only variables that don't hold lists of things.
-
-*NOTE*: When deviceinfo_initfs_extra_compression is set, make sure that the
-necessary tools to extract the configured archive format are in the initramfs
-archive.
 
 # ENVIRONMENT VARIABLES
 
@@ -69,10 +64,7 @@ progress as normal.
 # ARCHIVE COMPRESSION
 
 Archive compression parameters are specified in the
-*deviceinfo_initfs_compression* and *deviceinfo_initfs_extra_compression*
-deviceinfo variables. Their values do not have to match, but special
-consideration should be taken since some formats may require additional kernel
-options or tools in the initramfs to support it.
+*deviceinfo_initfs_compression* deviceinfo variable.
 
 Supported compression *formats* for mkinitfs are:
 
