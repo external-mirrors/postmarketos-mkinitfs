@@ -6,7 +6,7 @@ image: alpine:edge
 variables:
   GOFLAGS: "-buildvcs=false"
   PACKAGE_REGISTRY_URL: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/mkinitfs-vendor-${CI_COMMIT_TAG}/${CI_COMMIT_TAG}"
-  CI_TRON_TEMPLATE_PROJECT: &ci-tron-template-project postmarketOS/ci-common
+  CI_TRON_TEMPLATE_PROJECT: &ci-tron-template-project nura/ci-common
   CI_TRON_JOB_TEMPLATE_PROJECT_URL: $CI_SERVER_URL/$CI_TRON_TEMPLATE_PROJECT
   CI_TRON_JOB_TEMPLATE_COMMIT: &ci-tron-template-commit 7c95b5f2d53533e8722abf57c73e558168e811f3
 
